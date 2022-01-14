@@ -1,2 +1,2 @@
 # cmplx
-Generative art development and NFT storefront
+Generative art development scripts and code.
