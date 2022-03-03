@@ -25,6 +25,7 @@ let lineWeights = [0.05, 0.15, 0.5, 1, 5, 10, 20];
 let rectSizes = [10, 20, 50, 100, 200, 300, 500];
 let alphaOptions = [100, 200, 250];
 let noiseCount;
+let seed;
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
@@ -38,7 +39,7 @@ function setup() {
     gridProb = floor(random(4));
     randShapeProb = random(1);
     noiseCount = random(500, 50000);
-    //randomSeed(100);
+    //seed = randomSeed(1); // this needs to also control nearly everything, right now it's not controlling bg or probabilities 
 }
 
 function draw() {
