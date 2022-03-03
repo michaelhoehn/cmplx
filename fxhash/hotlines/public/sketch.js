@@ -32,6 +32,7 @@ function setup() {
     colorMode(HSB, 360, 100, 100, 100);
     rectMode(CENTER);
     canvasDraw = createGraphics(width, height);
+    //seed = randomSeed(2334);
     x1 = random(width);
     y1 = random(height);
     bgProb = floor(random(2));
@@ -39,7 +40,6 @@ function setup() {
     gridProb = floor(random(4));
     randShapeProb = random(1);
     noiseCount = random(500, 50000);
-    //seed = randomSeed(1); // this needs to also control nearly everything, right now it's not controlling bg or probabilities 
 }
 
 function draw() {
@@ -58,27 +58,19 @@ function draw() {
     mLayer.translate(0, 0); // move the mask into place. 0,0 for full sized CG.
 
     // <----- make any shapes you like to use as a mask below here ----->
-
-    // for loop with random quantity generator needed.
-
-    // set shape count based on random number
     shapeCount = ceil(random(shapeCount.length));
 
-    // set shape style by calling shapeSet()
     let shapeType = shapeSet();
 
     if (shapeType == 0) {
-        // Draw rectangles
         for (i = 0; i < shapeCount; i++) {
             rectSizeIndex();
             let rectSize1 = rs;
             rectSizeIndex();
             let rectSize2 = rs;
-            //print(rectSize1, rectSize2);
             mLayer.rect(random(width), random(height), rectSize1, rectSize2);
         }
     } else {
-        // Draw ellipses
         for (i = 0; i < shapeCount; i++) {
             mLayer.ellipse(random(width), random(height), random(20, 350));
         }
@@ -93,13 +85,11 @@ function draw() {
 
     // <----- Draw anything you want on top of this mask layer and below this line ----->
 
-    // Draw a grid in the background
-    // Declare grid direction type.
     let gridType = gridSet();
     gridSegmentIndex();
     let gridSegs = gs;
+    print("GridType is " + gridType);
 
-    // Set segment count based on probabilities
     segmentIndex();
     let segCount = sc;
     strokeIndex();
@@ -109,40 +99,24 @@ function draw() {
 
     if (gridType == 0) {
         gridX();
-        //print("GRID X");
     } else if (gridType == 1) {
         gridY();
-        //print("GRID Y");
     } else if (gridType == 2) {
         gridXY();
-        //print("GRID X AND Y");
     } else {
-        //drawLineGradient();
-        //lines(sc, lw, av);
+        gridNull();
     }
 
     drawLineGradient();
-    lines(sc, lw, av);
-    print(
-        "Segment Count: " + sc,
-        "Lineweight Value: " + lw,
-        "Alpha Value: " + av
-    );
 
-    // Add rare coloured shape if possible
-    // Call random shape placer
+    shapeGradient();
 
-    // Draw gradient in rare shape
-    //drawSolidGradient();
-    radialGradient();
-
-    // Draw the random shape
     rareShapeDrop();
-    stroke(lineColor, 100);
-    //blendMode(SOFT_LIGHT);
+
+    lines(sc, lw, av);
+
     noisey(noiseCount, random(0.5, 3.5));
 
-    // No loop set by default.
     noLoop();
 }
 
@@ -210,6 +184,16 @@ function gridXY() {
             strokeWeight(0.25);
             line(0, lineY, width, lineY);
         }
+    }
+}
+
+// Description: Null grid
+function gridNull() {
+    for (i = 1; i <= gs; i++) {
+        let lineX = (i * width) / gs;
+        stroke(bg);
+        strokeWeight(0.25);
+        line(lineX, 0, lineX, height);
     }
 }
 
@@ -293,17 +277,62 @@ function drawLineGradient() {
 }
 
 // Description: Draw a radial gradient
-function radialGradient() {
-    let color1, color2, color3, color4;
+function shapeGradient() {
+    let color1, color2, color3, color4, color5, color6, color7, color8;
     //colorful
     color1 = color(250, 50, 100, 100);
     color2 = color(200, 50, 100, 100);
+    color3 = color(150, 50, 100, 100);
+    color4 = color(100, 50, 100, 100);
+    color5 = color(50, 50, 100, 100);
+    color6 = color(25, 50, 100, 100);
 
-    //black white
-    color3 = color(0, 0, 80, 0);
-    color4 = color(0, 0, 10, 70);
+    //monochrome
+    color7 = color(0, 0, 80, 0);
+    color8 = color(0, 0, 10, 70);
 
-    let colors = [color1, color2, color3, color4];
+    let colors = [color1, color2, color3, color4, color5, color6, color7, color8];
+
+    // select a random color
+    let randomColor1Index = floor(random(colors.length));
+    let randomColor2Index = floor(random(colors.length));
+    print(randomColor1Index, randomColor2Index);
+
+    if (randomColor1Index == 0) {
+        color1 = colors[0];
+    } else if (randomColor1Index == 1) {
+        color1 = colors[1];
+    } else if (randomColor1Index == 2) {
+        color1 = colors[2];
+    } else if (randomColor1Index == 3) {
+        color1 = colors[3];
+    } else if (randomColor1Index == 4) {
+        color1 = colors[4];
+    } else if (randomColor1Index == 5) {
+        color1 = colors[5];
+    } else if (randomColor1Index == 6) {
+        color1 = colors[6];
+    } else {
+        color1 = colors[7];
+    }
+
+    if (randomColor2Index == 0) {
+        color1 = colors[0];
+    } else if (randomColor2Index == 1) {
+        color1 = colors[1];
+    } else if (randomColor2Index == 2) {
+        color1 = colors[2];
+    } else if (randomColor2Index == 3) {
+        color1 = colors[3];
+    } else if (randomColor2Index == 4) {
+        color1 = colors[4];
+    } else if (randomColor2Index == 5) {
+        color1 = colors[5];
+    } else if (randomColor2Index == 6) {
+        color1 = colors[6];
+    } else {
+        color1 = colors[7];
+    }
 
     let gradient = drawingContext.createLinearGradient(
         width / 2,
@@ -313,30 +342,6 @@ function radialGradient() {
         height / 2,
         360
     );
-
-    // select a random color
-    let randomColor1Index = floor(random(colors.length));
-    let randomColor2Index = floor(random(colors.length));
-
-    if (randomColor1Index == 0) {
-        color1 = colors[0];
-    } else if (randomColor1Index == 1) {
-        color1 = colors[1];
-    } else if (randomColor1Index == 2) {
-        color1 = colors[2];
-    } else {
-        color1 = colors[3];
-    }
-
-    if (randomColor2Index == 0) {
-        color2 = colors[0];
-    } else if (randomColor2Index == 1) {
-        color2 = colors[1];
-    } else if (randomColor2Index == 2) {
-        color2 = colors[2];
-    } else {
-        color2 = colors[3];
-    }
 
     gradient.addColorStop(0, color1);
     gradient.addColorStop(1, color2);
