@@ -2,9 +2,7 @@
 
 // <----- To Do -----> 
 // refine probabilities
-// add a different background and line color option
-// add more color pallets
-// random seed is not working and this also needs to work with fxrand()
+// refine counts for things
 
 // integrate with fxhash
 // fxrand() will control the seed <-- some testing required to make this work as is.
@@ -15,7 +13,7 @@ let canvasDraw;
 let x, y;
 let x1, y1;
 let bg;
-let shapeProb, bgProb, gridProb, randShapeProb;
+let shapeProb, bgProb, gridProb, randShapeProb, thicknessProb;
 let gridDir;
 let noiseScale = 0.02;
 let gridSegments = [3, 4, 5, 10, 20, 50];
@@ -24,21 +22,23 @@ let segmentCounts = [5, 10, 15, 20, 50];
 let lineWeights = [0.05, 0.15, 0.5, 1, 5, 10, 20];
 let rectSizes = [10, 20, 50, 100, 200, 300, 500];
 let alphaOptions = [100, 200, 250];
+let thicknessDir = [45, 90];
+let offsetDist = [0, 10, 25, 100];
+let lineThicknesses = [0, 10, 50, 100, 500];
 let noiseCount;
 let seed;
+let repeatNum;
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
     colorMode(HSB, 360, 100, 100, 100);
     rectMode(CENTER);
     canvasDraw = createGraphics(width, height);
-    //seed = randomSeed(2334);
+    //seed = randomSeed(1684); <-- this needs integration with FXhash
     x1 = random(width);
     y1 = random(height);
-    bgProb = floor(random(2));
     shapeProb = floor(random(2));
     gridProb = floor(random(4));
-    randShapeProb = random(1);
     noiseCount = random(500, 50000);
 }
 
@@ -88,8 +88,6 @@ function draw() {
     let gridType = gridSet();
     gridSegmentIndex();
     let gridSegs = gs;
-    print("GridType is " + gridType);
-
     segmentIndex();
     let segCount = sc;
     strokeIndex();
@@ -99,31 +97,28 @@ function draw() {
 
     if (gridType == 0) {
         gridX();
+        print("grid type X");
     } else if (gridType == 1) {
         gridY();
+        print("grid type Y");
     } else if (gridType == 2) {
         gridXY();
+        print("grid type XY");
     } else {
         gridNull();
+        print("grid type None");
     }
 
     drawLineGradient();
-
     shapeGradient();
-
     rareShapeDrop();
-
-    lines(sc, lw, av);
-
+    hotLines(sc, lw, av);
     noisey(noiseCount, random(0.5, 3.5));
-
+    blendMode(SOFT_LIGHT);
     noLoop();
 }
 
 // <----- Functions -----> //
-// Notes //
-// You have to specify calling the correct graphics canvas from within the function.
-// Then simply call the function in line with the rest of the code.
 
 // Description: Set the line work underlay based on segment count
 function lineTexture(n) {
@@ -138,15 +133,33 @@ function lineTexture(n) {
 }
 
 // Description: Controls the line behavior based on count, strokeweight, and alpha
-function lines(c, s, a) {
+function hotLines(c, s, a) {
+    thicknessDirection();
+    offsetDistance();
+    lineThickness();
+    let offset = od; 
     for (i = 0; i < c; i++) {
         stroke(lineColor, a);
         strokeWeight(s);
         x2 = random(width);
         y2 = random(height);
-        line(x1, y1, x2, y2);
+        let hotline = new Lines(x1, y1, x2, y2);
         x1 = x2;
         y1 = y2;
+        hotline.connect();
+
+        //let direction = td;
+        if(td == 45){
+            for(j=0; j<lt; j++){
+                let thickLine = new Lines(hotline.x1 + offset + j, hotline.y1 + offset + j, hotline.x2 + offset + j, hotline.y2 + offset + j);
+                thickLine.connect();
+            }
+        } else {
+            for(j=0; j<lt; j++){
+                let thickLine = new Lines(hotline.x1 - offset - j, hotline.y1 - offset - j, hotline.x2 - offset - j, hotline.y2 - offset - j);
+                thickLine.connect();
+            }
+        }
     }
 }
 
@@ -228,27 +241,25 @@ function drawSolidGradient() {
 
 // Description: Draw the gradient within the line based on colours
 function drawLineGradient() {
-    let color1, color2, color3, color4;
+    let color1, color2, color3, color4, color5, color6, color7, color8;
     //colorful
     color1 = color(250, 50, 100, 100);
     color2 = color(200, 50, 100, 100);
+    color3 = color(150, 50, 100, 100);
+    color4 = color(100, 50, 100, 100);
+    color5 = color(50, 50, 100, 100);
+    color6 = color(25, 50, 100, 100);
 
-    //black white
-    color3 = color(0, 0, 80, 0);
-    color4 = color(0, 0, 10, 70);
+    //monochrome
+    color7 = color(0, 0, 80, 0);
+    color8 = color(0, 0, 10, 70);
 
-    let colors = [color1, color2, color3, color4];
-
-    let gradient = drawingContext.createLinearGradient(
-        width / 2 - 100,
-        200,
-        width / 2 + 200,
-        300
-    );
+    let colors = [color1, color2, color3, color4, color5, color6, color7, color8];
 
     // select a random color
     let randomColor1Index = floor(random(colors.length));
     let randomColor2Index = floor(random(colors.length));
+    //print(randomColor1Index, randomColor2Index);
 
     if (randomColor1Index == 0) {
         color1 = colors[0];
@@ -256,19 +267,44 @@ function drawLineGradient() {
         color1 = colors[1];
     } else if (randomColor1Index == 2) {
         color1 = colors[2];
-    } else {
+    } else if (randomColor1Index == 3) {
         color1 = colors[3];
+    } else if (randomColor1Index == 4) {
+        color1 = colors[4];
+    } else if (randomColor1Index == 5) {
+        color1 = colors[5];
+    } else if (randomColor1Index == 6) {
+        color1 = colors[6];
+    } else {
+        color1 = colors[7];
     }
 
     if (randomColor2Index == 0) {
-        color2 = colors[0];
+        color1 = colors[0];
     } else if (randomColor2Index == 1) {
-        color2 = colors[1];
+        color1 = colors[1];
     } else if (randomColor2Index == 2) {
-        color2 = colors[2];
+        color1 = colors[2];
+    } else if (randomColor2Index == 3) {
+        color1 = colors[3];
+    } else if (randomColor2Index == 4) {
+        color1 = colors[4];
+    } else if (randomColor2Index == 5) {
+        color1 = colors[5];
+    } else if (randomColor2Index == 6) {
+        color1 = colors[6];
     } else {
-        color2 = colors[3];
+        color1 = colors[7];
     }
+
+    let gradient = drawingContext.createLinearGradient(
+        width / 2,
+        height / 2,
+        0,
+        width / 2,
+        height / 2,
+        360
+    );
 
     gradient.addColorStop(0, color1);
     gradient.addColorStop(1, color2);
@@ -296,7 +332,7 @@ function shapeGradient() {
     // select a random color
     let randomColor1Index = floor(random(colors.length));
     let randomColor2Index = floor(random(colors.length));
-    print(randomColor1Index, randomColor2Index);
+    //print(randomColor1Index, randomColor2Index);
 
     if (randomColor1Index == 0) {
         color1 = colors[0];
@@ -378,6 +414,7 @@ function keyPressed() {
 
 // Description: Boolean to set the BG color
 function bgSet() {
+    let bgProb = floor(random(2));
     if (bgProb == 1) {
         bg = 255;
         lineColor = 0;
@@ -398,11 +435,15 @@ function shapeSet() {
 
 // Description: Boolean to set the random shape insert
 function placeRandShape() {
+    let randShapeProb = random(1);
     if (randShapeProb > 0.8) {
+        print("Rare shape Ellipse");
         return 0; // draw ellipse
     } else if (randShapeProb >= 0.5 && randShapeProb < 0.8) {
+        print("Rare shape Rect")
         return 1; // draw rect.
     } else if (randShapeProb < 0.5) {
+        print("Rare shape False")
         return 2; // draw nothing
     }
 }
@@ -510,3 +551,63 @@ function alphaValue() {
         av = alphaOptions[0];
     }
 }
+
+// Description: Set alpha value based on index by probability
+function thicknessDirection() {
+    //let thicknessDir = [45, 90];
+    let n = random(1);
+    if (n > 0.50) {
+        td = thicknessDir[0];
+    } else {
+        td = thicknessDir[1];
+    } 
+}
+
+// Description: Set alpha value based on index by probability
+function offsetDistance() {
+    //let offsetDist = [0, 10, 25, 100];
+    let n = random(1);
+    if (n > 0.75) {
+        od = offsetDist[0];
+    } else if(n >= 0.50 && n < 0.75){
+        od = offsetDist[1];
+    } else if(n >= 0.25 && n < 0.50){
+        od = offsetDist[2];
+    } else {
+        od = offsetDist[3];
+    } 
+    print("offset distance is " + od);
+}
+
+// Description: Set hotline thickness
+function lineThickness() {
+    //let lineThicknesses = [0, 10, 50, 100, 500];
+
+    let n = random(1);
+    if (n > 0.95) {
+        lt = lineThicknesses[4];
+    } else if(n >= 0.70 && n < 0.95){
+        lt = lineThicknesses[3];
+    } else if(n >= 0.40 && n < 0.70){
+        lt = lineThicknesses[2];
+    } else if (n >= 0.15 && n < 0.40){
+        lt = lineThicknesses[1];
+    } else{
+        lt = lineThicknesses[0];
+    } 
+
+    print("line thickness is " + lt);
+}
+
+// <----- Object Classes below this section ----->
+class Lines {
+    constructor(x1, y1, x2, y2) {
+      this.x1 = x1;
+      this.y1 = y1;
+      this.x2 = x2;
+      this.y2 = y2;
+    }
+    connect() {
+      line(this.x1, this.y1, this.x2, this.y2);
+    }
+  }
