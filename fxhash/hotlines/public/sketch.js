@@ -5,8 +5,7 @@
 // refine counts for things
 // fix color issues : color should be removed from the methods and brought into their own gridColor() + hotlineColor() methods respectively
 // the issue is that bc colors are being called throughout, the colors are being manipulated in unpredictable ways
-// add back in the directional * -1 in the Hotlines method
-// landscape / horizontal / square composition function setting 33% each
+// strokeCapStyle();
 
 // integrate with fxhash
 // fxrand() will control the seed <-- some testing required to make this work as is.
@@ -22,26 +21,29 @@ let gridDir;
 let noiseScale = 0.02;
 let gridSegments = [3, 4, 5, 10, 20, 50];
 let shapeCount = [1, 2, 3, 4, 5];
-let segmentCounts = [5, 10, 15, 20, 50];
+let segmentCounts = [1, 3, 5, 8, 10];
 let lineWeights = [0.05, 0.15, 0.5, 1, 5, 10, 20];
 let rectSizes = [10, 20, 50, 100, 200, 300, 500];
 let alphaOptions = [50, 100, 200];
-let thicknessDir = [45, 90];
+let thicknessDir = [315, 225, 135, 45, 0];
 let offsetDist = [0, 10, 25, 100];
 let lineThicknesses = [0, 10, 50, 100, 500];
 let noiseCount;
 let seed;
 let repeatNum;
-let formatWidth = 800;
-let formatHeight = 1500;
+let formatWidth = [1080, 720, 1080];
+let formatHeight = [720, 1080, 1080];
+
+
 
 function setup() {
- 
+    seed = randomSeed(3215);
+    canvasFormat();
     createCanvas(formatWidth, formatHeight);
     colorMode(HSB, 360, 100, 100, 100);
     rectMode(CENTER);
+    strokeCapStyle();
     canvasDraw = createGraphics(formatWidth, formatHeight);
-    //seed = randomSeed(1684); <-- this needs integration with FXhash
     x1 = random(formatWidth);
     y1 = random(formatHeight);
     gridProb = floor(random(4));
@@ -57,7 +59,7 @@ function draw() {
     //canvasDraw.background(50, 100);
     canvasDraw.stroke(lineColor);
     canvasDraw.strokeWeight(random(0.05, 0.75));
-    lineTexture(random(1000, 10000)); // Look at this function, the CG is modified in the core code.
+    lineTexture(random(10, 10000)); // Look at this function, the CG is modified in the core code.
 
     // Layer 2 - Create mask layer
     mLayer = createGraphics(formatWidth, formatHeight);
@@ -131,6 +133,26 @@ function draw() {
 
 // <----- Functions -----> //
 
+// Description: Portrait 3:2 {1080x720}, Landscape 2:3 {720x1080}, Square 1:1 {1080x1080}
+function canvasFormat(){
+    let n = random(1);
+    //formatWidth = [1080, 720, 1080];
+    //formatHeight = [720, 1080, 1080];
+    if (n > 0.667) {
+        formatWidth = formatWidth[0];
+        formatHeight = formatHeight[0];
+        print("Landscape 2:3");
+    } else if (n >= 0.334 && n < 0.667) {
+        formatWidth = formatWidth[1];
+        formatHeight = formatHeight[1];
+        print("Portrait 3:2");
+    } else {
+        formatWidth = formatWidth[2];
+        formatHeight = formatHeight[2];
+        print("Square 1:1");
+    }
+}
+
 // Description: Set the line work underlay based on segment count
 function lineTexture(n) {
     let numSegments = n;
@@ -159,17 +181,37 @@ function hotLines(c, s, a) {
         y1 = y2;
         hotline.connect();
 
-        //let direction = td;
-        if(td == 45){
+        //let thicknessDir = [315, 225, 135, 45];
+        if(td == 315){
+            print("Offset == 315d");
             for(j=0; j<lt; j++){
                 let thickLine = new Lines(hotline.x1 + offset + j, hotline.y1 + offset + j, hotline.x2 + offset + j, hotline.y2 + offset + j);
                 thickLine.connect();
             }
-        } else {
+        } else if(td == 225){
+            print("Offset == 225d")
+            for(j=0; j<lt; j++){
+                let thickLine = new Lines(hotline.x1 - offset - j, hotline.y1 + offset + j, hotline.x2 - offset - j, hotline.y2 + offset + j);
+                thickLine.connect();
+            }
+        } else if(td == 135){
+            print("Offset == 135d")
             for(j=0; j<lt; j++){
                 let thickLine = new Lines(hotline.x1 - offset - j, hotline.y1 - offset - j, hotline.x2 - offset - j, hotline.y2 - offset - j);
                 thickLine.connect();
             }
+        } else if(td == 135){
+            print("Offset == 45d")
+            for(j=0; j<lt; j++){
+                let thickLine = new Lines(hotline.x1 + offset + j, hotline.y1 - offset - j, hotline.x2 + offset + j, hotline.y2 - offset - j);
+                thickLine.connect();
+            } 
+        } else {
+            print("Rare twisted line")
+            for(j=0; j<lt; j++){
+                let thickLine = new Lines(hotline.x1 + offset + j, hotline.y1 + offset + j, hotline.x2 - offset - j, hotline.y2 - offset - j);
+                thickLine.connect();
+            } 
         }
     }
 }
@@ -412,7 +454,16 @@ function noisey(n, s) {
     noLoop();
 }
 
-// <----- User controls -----> 
+function strokeCapStyle(){
+    n = random(1);
+    if (n >= 0.9){
+        strokeCap(PROJECT);
+    } else{
+        strokeCap(ROUND);
+    }
+}
+
+// <--------------------------------------------------------------- User controls -----------------------------------------------------------------> 
 function keyPressed() {
     switch (key) {
         case 's':
@@ -421,7 +472,7 @@ function keyPressed() {
     }
 }
 
-// <----- Probability controls below this section ----->
+// <-------------------------------------------------- Probability controls below this section ---------------------------------------------------->
 
 // Description: Boolean to set the BG color
 function bgSet() {
@@ -566,13 +617,19 @@ function alphaValue() {
 
 // Description: Set alpha value based on index by probability
 function thicknessDirection() {
-    //let thicknessDir = [45, 90];
+    //let thicknessDir = [315, 225, 135, 45];
     let n = random(1);
-    if (n > 0.50) {
+    if (n >= 0.75) {
         td = thicknessDir[0];
-    } else {
+    } else if(n >= 0.5 && n < 0.75){
         td = thicknessDir[1];
-    } 
+    } else if(n >= 0.25 && n < 0.50){
+        td = thicknessDir[2];
+    } else if(n >= 0.07 && n < 0.25){
+        td = thicknessDir[2];
+    } else {
+        td = thicknessDir[4];
+    }
 }
 
 // Description: Set alpha value based on index by probability
