@@ -2,14 +2,12 @@
 
 // <----- To Do -----> 
 // refine probabilities
-// refine counts for things
-// fix color issues : color should be removed from the methods and brought into their own gridColor() + hotlineColor() methods respectively
-// the issue is that bc colors are being called throughout, the colors are being manipulated in unpredictable ways
-// strokeCapStyle();
+// make colors better using the p5 web editor 
 
 // integrate with fxhash
 // fxrand() will control the seed <-- some testing required to make this work as is.
 // fxrand() to be used in all random() instances 
+// what rare metrics do you want to capture: offset, rare shape, colored background texture, lineweight, anything in the probabilities sections
 
 let i;
 let canvasDraw;
@@ -18,26 +16,30 @@ let x1, y1;
 let bg;
 let shapeProb, bgProb, gridProb, randShapeProb, thicknessProb;
 let gridDir;
-let noiseScale = 0.02;
 let gridSegments = [3, 4, 5, 10, 20, 50];
-let shapeCount = [1, 2, 3, 4, 5];
 let segmentCounts = [1, 3, 5, 8, 10];
-let lineWeights = [0.05, 0.15, 0.5, 1, 5, 10, 20];
-let rectSizes = [10, 20, 50, 100, 200, 300, 500];
+let lineWeights = [0.5, 1, 1.5, 3, 5, 10, 20];
+let rectSizes = [50, 100, 200, 250, 300, 400, 500];
 let alphaOptions = [50, 100, 200];
 let thicknessDir = [315, 225, 135, 45, 0];
-let offsetDist = [0, 10, 25, 100];
-let lineThicknesses = [0, 10, 50, 100, 500];
+let offsetDist = [5, 25, 50, 100];
+let lineThicknesses = [10, 25, 50, 100, 500];
+let formatWidth = [1080, 720, 1080];
+let formatHeight = [720, 1080, 1080];
+let sizeMin = 100;
+let sizeMax = 500;
 let noiseCount;
 let seed;
 let repeatNum;
-let formatWidth = [1080, 720, 1080];
-let formatHeight = [720, 1080, 1080];
-
-
+let hotlineColor;
+let gridLineColor; 
+let bgLineColor; 
+let rareStroke;
+let optionNum;
+let shapeCount;
 
 function setup() {
-    seed = randomSeed(3215);
+    //seed = randomSeed(9800); // 9846 shows bug with line not visible
     canvasFormat();
     createCanvas(formatWidth, formatHeight);
     colorMode(HSB, 360, 100, 100, 100);
@@ -48,16 +50,17 @@ function setup() {
     y1 = random(formatHeight);
     gridProb = floor(random(4));
     noiseCount = random(25000, 50000);
+    rareStrokeColor = color(45, 60, 80, 100);
 }
 
 function draw() {
-    // Background layer
-    bgSet();
+    setBackgroundColor();       // output: bg
     background(bg);
+    setBackgroundLineColor();   // output: bgLineColor
 
     // Layer 1 - Create draw layer. All drawings need to happen here if wanting to be clipped by mask.
     //canvasDraw.background(50, 100);
-    canvasDraw.stroke(lineColor);
+    canvasDraw.stroke(bgLineColor);
     canvasDraw.strokeWeight(random(0.05, 0.75));
     lineTexture(random(10, 10000)); // Look at this function, the CG is modified in the core code.
 
@@ -66,7 +69,7 @@ function draw() {
     mLayer.translate(0, 0); // move the mask into place. 0,0 for full sized CG.
 
     // <----- make any shapes you like to use as a mask below here ----->
-    shapeCount = ceil(random(shapeCount.length));
+    shapeCount = floor(random(1,10));
 
     let shapeType = shapeSet();
 
@@ -80,7 +83,7 @@ function draw() {
         }
     } else {
         for (i = 0; i < shapeCount; i++) {
-            mLayer.ellipse(random(formatWidth), random(formatHeight), random(20, 350));
+            mLayer.ellipse(random(formatWidth), random(formatHeight), random(sizeMin, sizeMax));
         }
     }
 
@@ -91,47 +94,39 @@ function draw() {
     // Instantiate the mask layer.
     image(drawClone, 0, 0);
 
-    // <----- Draw anything you want on top of this mask layer and below this line ----->
+    // <-------------------------------- Draw anything you want on top of this mask layer and below this line ------------------------------------------>
 
-    let gridType = gridSet();
-    gridSegmentIndex();
-    let gridSegs = gs;
-    segmentIndex();
-    let segCount = sc;
-    strokeIndex();
-    let lWeight = lw;
-    alphaValue();
-    let alphaVal = av;
+    let gridType = gridSet();   // output: 0,1,2,3
+    gridSegmentIndex();         // output: gs
+    setGridLineColor();         // output: gridLineColor
 
     if (gridType == 0) {
-        gridX();
-        print("grid type X");
+        gridX(gridLineColor);
+        //print("grid type X");
     } else if (gridType == 1) {
-        gridY();
-        print("grid type Y");
+        gridY(gridLineColor);
+        //print("grid type Y");
     } else if (gridType == 2) {
-        gridXY();
-        print("grid type XY");
+        gridXY(gridLineColor);
+        //print("grid type XY");
     } else {
         gridNull();
-        print("grid type None");
+        //print("grid type None");
     }
 
-    drawLineGradient();
+    //drawLineGradient();
     shapeGradient();
     rareShapeDrop();
-    hotLines(sc, lw, av);
+    segmentIndex();
+    strokeIndex();
+    stroke(0);
+    hotLines();
     noisey(noiseCount, random(0.5, 3.5));
-    blendMode(SOFT_LIGHT);
+    noiseStyle()
     noLoop();
-
-    // <----- Debugging Messages -----> 
-    print("Alpha Value: " + av);
-    print("LineWeight Value: " + lw);
-    print("Segment Count Value: " + sc);
 }
 
-// <----- Functions -----> //
+// <----------------------------------------------- Draw Functions ----------------------------------------------------> //
 
 // Description: Portrait 3:2 {1080x720}, Landscape 2:3 {720x1080}, Square 1:1 {1080x1080}
 function canvasFormat(){
@@ -141,15 +136,15 @@ function canvasFormat(){
     if (n > 0.667) {
         formatWidth = formatWidth[0];
         formatHeight = formatHeight[0];
-        print("Landscape 2:3");
+        //print("Landscape 2:3");
     } else if (n >= 0.334 && n < 0.667) {
         formatWidth = formatWidth[1];
         formatHeight = formatHeight[1];
-        print("Portrait 3:2");
+        //print("Portrait 3:2");
     } else {
         formatWidth = formatWidth[2];
         formatHeight = formatHeight[2];
-        print("Square 1:1");
+        //print("Square 1:1");
     }
 }
 
@@ -166,14 +161,23 @@ function lineTexture(n) {
 }
 
 // Description: Controls the line behavior based on count, strokeweight, and alpha
-function hotLines(c, s, a) {
+// Notes: colors are not working and I'm going to try removing the functionality from this function to try and debug
+function hotLines() {
+    strokeWeight(lineWeight);
+    let blendProb = random(1);
+    if(optionNum == 0 && blendProb >= 0.50){
+        //gold
+        blendMode(HARD_LIGHT);
+    } else if(optionNum == 1 && blendProb >= 0.50){
+        //black
+        blendMode(HARD_LIGHT);
+    } 
+    setHotLineColor();
     thicknessDirection();
     offsetDistance();
     lineThickness();
     let offset = od; 
-    for (i = 0; i < c; i++) {
-        stroke(lineColor, a);
-        strokeWeight(s);
+    for (i = 0; i < segmentCount; i++) {
         x2 = random(formatWidth);
         y2 = random(formatHeight);
         let hotline = new Lines(x1, y1, x2, y2);
@@ -214,39 +218,39 @@ function hotLines(c, s, a) {
             } 
         }
     }
+    
 }
 
 // Description: Creates a grid with X Direction offset
-function gridX() {
+function gridX(s) {
     for (i = 1; i <= gs; i++) {
         let lineX = (i * formatWidth) / gs;
-        stroke(lineColor);
+        stroke(s);
         strokeWeight(0.25);
         line(lineX, 0, lineX, formatHeight);
     }
 }
 
 // Description: Creates a grid with Y Direction offset
-function gridY() {
+function gridY(s) {
     for (i = 1; i <= gs; i++) {
         let lineY = (i * formatHeight) / gs;
-        stroke(lineColor);
+        stroke(s);
         strokeWeight(0.25);
         line(0, lineY, formatWidth, lineY);
     }
 }
 
 // Description: Creates a grid with Y Direction offset
-function gridXY() {
+function gridXY(s) {
     for (i = 1; i <= gs; i++) {
         for (i = 1; i <= gs; i++) {
+            stroke(s);
             let lineX = (i * formatWidth) / gs;
-            stroke(lineColor);
             strokeWeight(0.25);
             line(lineX, 0, lineX, formatHeight);
 
             let lineY = (i * formatHeight) / gs;
-            stroke(lineColor);
             strokeWeight(0.25);
             line(0, lineY, formatWidth, lineY);
         }
@@ -269,31 +273,16 @@ function rareShapeDrop() {
     if (ps == 0) {
         //fill(255, 0, 0);
         noStroke();
-        ellipse(random(formatWidth), random(formatHeight), random(20, 200));
+        ellipse(random(formatWidth), random(formatHeight), random(100, 500));
     } else if (ps == 1) {
         //fill(255, 0, 0);
         noStroke();
-        rect(random(formatWidth), random(formatHeight), random(20, 300), random(20, 300));
+        rect(random(formatWidth), random(formatHeight), random(100, 500), random(100, 500));
     }
 }
 
-// Description: Draw the gradient within the shape based on colours
-function drawSolidGradient() {
-    let gradient = drawingContext.createLinearGradient(
-        formatWidth / 2 - 100,
-        200,
-        formatHeight / 2 + 200,
-        300
-    );
-
-    gradient.addColorStop(0, color(310, 100, 100, 100));
-    gradient.addColorStop(1, color(250, 100, 100, 100));
-
-    drawingContext.fillStyle = gradient;
-}
-
 // Description: Draw the gradient within the line based on colours
-function drawLineGradient() {
+function setHotLineColor() {
     let color1, color2, color3, color4, color5, color6, color7, color8;
     //colorful
     color1 = color(250, 50, 100, 100);
@@ -351,12 +340,10 @@ function drawLineGradient() {
     }
 
     let gradient = drawingContext.createLinearGradient(
-        formatWidth / 2,
-        formatHeight / 2,
         0,
-        formatWidth / 2,
-        formatHeight / 2,
-        360
+        0,
+        formatWidth,
+        formatHeight
     );
 
     gradient.addColorStop(0, color1);
@@ -424,12 +411,10 @@ function shapeGradient() {
     }
 
     let gradient = drawingContext.createLinearGradient(
-        formatWidth / 2,
-        formatHeight / 2,
         0,
-        formatWidth / 2,
-        formatHeight / 2,
-        360
+        0,
+        formatWidth,
+        formatHeight
     );
 
     gradient.addColorStop(0, color1);
@@ -455,7 +440,7 @@ function noisey(n, s) {
 }
 
 function strokeCapStyle(){
-    n = random(1);
+    let n = random(1);
     if (n >= 0.9){
         strokeCap(PROJECT);
     } else{
@@ -463,7 +448,27 @@ function strokeCapStyle(){
     }
 }
 
+function noiseStyle(){
+    let noiseHighlight = random(1);
+    if (noiseHighlight >= 0.75){
+        blendMode(SOFT_LIGHT);
+        ellipse(random(width), random(height), random(100, width));
+    }
+    let noiseDifference = random(1);
+    if(noiseDifference >= 0.90){
+        blendMode(DIFFERENCE);
+        ellipse(random(width), random(height), random(50, 200));
+    }
+    let exclusionFrame = random(1);
+    if (exclusionFrame >= 0.98){
+        rectMode(CENTER);
+        blendMode(EXCLUSION);
+        rect(width/2, height/2, width-200, height-200);
+    }
+}
+
 // <--------------------------------------------------------------- User controls -----------------------------------------------------------------> 
+
 function keyPressed() {
     switch (key) {
         case 's':
@@ -474,15 +479,92 @@ function keyPressed() {
 
 // <-------------------------------------------------- Probability controls below this section ---------------------------------------------------->
 
-// Description: Boolean to set the BG color
-function bgSet() {
-    let bgProb = floor(random(2));
-    if (bgProb == 1) {
-        bg = 255;
-        lineColor = 0;
+// Description: Sets the color for BG
+function setBackgroundColor() {
+    let n = random(1);
+    // special rare bg
+    let hue = 50;
+    let saturation = 10;
+    let brightness = 100;
+    let maxAlpha = 100; 
+
+    if (n >= 0.90) {
+        // Special Gold Background
+        bg = color(hue, saturation, brightness, maxAlpha);
+        optionNum = 0; 
+    } else if(n < 0.90 && n >= 0.45){
+        // 50/50 for Black BG
+        bg = color(0);
+        optionNum = 1; 
     } else {
-        bg = 0;
-        lineColor = 255;
+        // 50/50 for White BG
+        bg = color(255);
+        optionNum = 2; 
+    }
+}
+
+function setBackgroundLineColor(){
+    let n = random(1);
+    if(optionNum == 0 && n >= 0.50){
+        // Gold BG + White Lines
+        bgLineColor = color(255);
+        //print("DEBUG: BGLineColor is WHITE");
+    } else if(optionNum == 0 && n >= 0 && n < 0.50){
+        // Gold BG + Black Lines 
+        bgLineColor = color(0);
+        //print("DEBUG: BGLineColor is BLACK");
+    } else if(optionNum == 1 && n >= 0.80) {
+        // Black BG + Gold Lines
+        bgLineColor = rareStrokeColor;
+        //print("DEBUG: BGLineColor is GOLD RARE");
+    } else if(optionNum == 1 && n >= 0 && n < 0.80){
+        // Black BG + White Lines
+        bgLineColor = color(255);
+        //print("DEBUG: BGLineColor is WHITE");
+    } else if(optionNum == 2 && n >= 0.80) {
+        // White BG + Gold Lines
+        bgLineColor = rareStrokeColor;
+        //print("DEBUG: BGLineColor is GOLD RARE");
+    } else if(optionNum == 2 && n >= 0 && n < 0.80){
+        // White BG + Black Lines
+        bgLineColor = color(0);
+        //print("DEBUG: BGLineColor is BLACK");
+    } 
+}
+
+// Description: Sets the color for Gridlines 
+function setGridLineColor(){
+    let n = random(1);
+    let rareProb = 0.85;
+
+    if (optionNum == 0 && n >= 0.85){
+        // Gold BG + Gold Lines
+        gridLineColor = rareStrokeColor;
+        //print("DEBUG: GridLineColor => GOLD");
+    } else if(optionNum == 0 && n >= 0.425 && n < rareProb) {
+        // Gold BG + White Lines
+        gridLineColor = color(255);
+        //print("DEBUG: GridLineColor => WHITE");
+    } else if(optionNum == 0 && n >= 0 && n < 0.425){
+        // Gold BG + Black Lines
+        gridLineColor = color(0);
+        //print("DEBUG: GridLineColor => BLACK");
+    } else if(optionNum == 1 && n >= rareProb){
+        // Black BG + Gold Lines
+        gridLineColor = rareStrokeColor;
+        //print("DEBUG: GridLineColor => GOLD");
+    } else if(optionNum == 1 && n >= 0 && n < rareProb){
+        // Black BG + White Lines 
+        gridLineColor = color(255);
+        //print("DEBUG: GridLineColor => WHITE");
+    } else if(optionNum == 2 && n >= rareProb){
+        // White BG + Gold Lines
+        gridLineColor = rareStrokeColor;
+        //print("DEBUG: GridLineColor => GOLD");
+    } else {
+        // White BH + Black Lines
+        gridLineColor = color(0);
+        //print("DEBUG: GridLineColor => BLACK");
     }
 }
 
@@ -500,13 +582,13 @@ function shapeSet() {
 function placeRandShape() {
     let randShapeProb = random(1);
     if (randShapeProb > 0.8) {
-        print("Rare shape Ellipse");
+        print("DEGUG: Rare shape Ellipse");
         return 0; // draw ellipse
     } else if (randShapeProb >= 0.5 && randShapeProb < 0.8) {
-        print("Rare shape Rect")
+        print("DEGUG: Rare shape Rect")
         return 1; // draw rect.
     } else if (randShapeProb < 0.5) {
-        print("Rare shape False")
+        print("DEGUG: Rare shape FALSE")
         return 2; // draw nothing
     }
 }
@@ -550,16 +632,17 @@ function segmentIndex() {
     //segmentCounts = [5,10,30,50,100];
     let n = random(1);
     if (n > 0.95) {
-        sc = segmentCounts[4];
+        segmentCount = segmentCounts[4];
     } else if (n >= 0.85 && n < 0.95) {
-        sc = segmentCounts[3];
+        segmentCount = segmentCounts[3];
     } else if (n >= 0.6 && n < 0.75) {
-        sc = segmentCounts[2];
+        segmentCount = segmentCounts[2];
     } else if (n >= 0.2 && n < 0.6) {
-        sc = segmentCounts[1];
+        segmentCount = segmentCounts[1];
     } else {
-        sc = segmentCounts[0];
+        segmentCount = segmentCounts[0];
     }
+    print("DEBUG: HL SegmentCount is " + segmentCount);
 }
 
 // Description: Set lineweight value based on index by probability
@@ -567,20 +650,21 @@ function strokeIndex() {
     //lineWeights = [0.05, 0.15, 0.50, 1, 5, 10, 20];
     let n = random(1);
     if (n > 0.95) {
-        lw = lineWeights[0];
+        lineWeight = lineWeights[0];
     } else if (n >= 0.85 && n < 0.95) {
-        lw = lineWeights[1];
+        lineWeight = lineWeights[1];
     } else if (n >= 0.65 && n < 0.85) {
-        lw = lineWeights[2];
+        lineWeight = lineWeights[2];
     } else if (n >= 0.45 && n < 0.65) {
-        lw = lineWeights[3];
+        lineWeight = lineWeights[3];
     } else if (n >= 0.35 && n < 0.45) {
-        lw = lineWeights[4];
+        lineWeight = lineWeights[4];
     } else if (n >= 0.15 && n < 0.35) {
-        lw = lineWeights[5];
+        lineWeight = lineWeights[5];
     } else {
-        lw = lineWeights[6];
+        lineWeight = lineWeights[6];
     }
+    print("DEBUG: HL LineWeight is " + lineWeight);
 }
 
 // Description: Set grid segment value based on index by probability
@@ -613,6 +697,7 @@ function alphaValue() {
     } else {
         av = alphaOptions[0];
     }
+    print("DEBUG: alpha is " + av);
 }
 
 // Description: Set alpha value based on index by probability
@@ -645,12 +730,12 @@ function offsetDistance() {
     } else {
         od = offsetDist[3];
     } 
-    print("offset distance is " + od);
+    print("DEBUG: Offset distance is " + od);
 }
 
 // Description: Set hotline thickness
 function lineThickness() {
-    //let lineThicknesses = [0, 10, 50, 100, 500];
+    //let lineThicknesses = [5, 15, 25, 100, 500];
 
     let n = random(1);
     if (n > 0.95) {
@@ -664,8 +749,7 @@ function lineThickness() {
     } else{
         lt = lineThicknesses[0];
     } 
-
-    print("line thickness is " + lt);
+    print("DEBUG: Line thickness is " + lt);
 }
 
 // <----- Object Classes below this section ----->
@@ -677,6 +761,6 @@ class Lines {
       this.y2 = y2;
     }
     connect() {
-      line(this.x1, this.y1, this.x2, this.y2);
+        line(this.x1, this.y1, this.x2, this.y2);
     }
   }
