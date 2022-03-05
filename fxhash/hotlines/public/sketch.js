@@ -3,6 +3,10 @@
 // <----- To Do -----> 
 // refine probabilities
 // refine counts for things
+// fix color issues : color should be removed from the methods and brought into their own gridColor() + hotlineColor() methods respectively
+// the issue is that bc colors are being called throughout, the colors are being manipulated in unpredictable ways
+// add back in the directional * -1 in the Hotlines method
+// landscape / horizontal / square composition function setting 33% each
 
 // integrate with fxhash
 // fxrand() will control the seed <-- some testing required to make this work as is.
@@ -21,25 +25,27 @@ let shapeCount = [1, 2, 3, 4, 5];
 let segmentCounts = [5, 10, 15, 20, 50];
 let lineWeights = [0.05, 0.15, 0.5, 1, 5, 10, 20];
 let rectSizes = [10, 20, 50, 100, 200, 300, 500];
-let alphaOptions = [100, 200, 250];
+let alphaOptions = [50, 100, 200];
 let thicknessDir = [45, 90];
 let offsetDist = [0, 10, 25, 100];
 let lineThicknesses = [0, 10, 50, 100, 500];
 let noiseCount;
 let seed;
 let repeatNum;
+let formatWidth = 800;
+let formatHeight = 1500;
 
 function setup() {
-    createCanvas(windowWidth, windowHeight);
+ 
+    createCanvas(formatWidth, formatHeight);
     colorMode(HSB, 360, 100, 100, 100);
     rectMode(CENTER);
-    canvasDraw = createGraphics(width, height);
+    canvasDraw = createGraphics(formatWidth, formatHeight);
     //seed = randomSeed(1684); <-- this needs integration with FXhash
-    x1 = random(width);
-    y1 = random(height);
-    shapeProb = floor(random(2));
+    x1 = random(formatWidth);
+    y1 = random(formatHeight);
     gridProb = floor(random(4));
-    noiseCount = random(500, 50000);
+    noiseCount = random(25000, 50000);
 }
 
 function draw() {
@@ -54,7 +60,7 @@ function draw() {
     lineTexture(random(1000, 10000)); // Look at this function, the CG is modified in the core code.
 
     // Layer 2 - Create mask layer
-    mLayer = createGraphics(width, height);
+    mLayer = createGraphics(formatWidth, formatHeight);
     mLayer.translate(0, 0); // move the mask into place. 0,0 for full sized CG.
 
     // <----- make any shapes you like to use as a mask below here ----->
@@ -68,11 +74,11 @@ function draw() {
             let rectSize1 = rs;
             rectSizeIndex();
             let rectSize2 = rs;
-            mLayer.rect(random(width), random(height), rectSize1, rectSize2);
+            mLayer.rect(random(formatWidth), random(formatHeight), rectSize1, rectSize2);
         }
     } else {
         for (i = 0; i < shapeCount; i++) {
-            mLayer.ellipse(random(width), random(height), random(20, 350));
+            mLayer.ellipse(random(formatWidth), random(formatHeight), random(20, 350));
         }
     }
 
@@ -116,6 +122,11 @@ function draw() {
     noisey(noiseCount, random(0.5, 3.5));
     blendMode(SOFT_LIGHT);
     noLoop();
+
+    // <----- Debugging Messages -----> 
+    print("Alpha Value: " + av);
+    print("LineWeight Value: " + lw);
+    print("Segment Count Value: " + sc);
 }
 
 // <----- Functions -----> //
@@ -124,8 +135,8 @@ function draw() {
 function lineTexture(n) {
     let numSegments = n;
     for (i = 0; i < numSegments; i++) {
-        x2 = random(width);
-        y2 = random(height);
+        x2 = random(formatWidth);
+        y2 = random(formatHeight);
         canvasDraw.line(x1, y1, x2, y2);
         x1 = x2;
         y1 = y2;
@@ -141,8 +152,8 @@ function hotLines(c, s, a) {
     for (i = 0; i < c; i++) {
         stroke(lineColor, a);
         strokeWeight(s);
-        x2 = random(width);
-        y2 = random(height);
+        x2 = random(formatWidth);
+        y2 = random(formatHeight);
         let hotline = new Lines(x1, y1, x2, y2);
         x1 = x2;
         y1 = y2;
@@ -166,20 +177,20 @@ function hotLines(c, s, a) {
 // Description: Creates a grid with X Direction offset
 function gridX() {
     for (i = 1; i <= gs; i++) {
-        let lineX = (i * width) / gs;
+        let lineX = (i * formatWidth) / gs;
         stroke(lineColor);
         strokeWeight(0.25);
-        line(lineX, 0, lineX, height);
+        line(lineX, 0, lineX, formatHeight);
     }
 }
 
 // Description: Creates a grid with Y Direction offset
 function gridY() {
     for (i = 1; i <= gs; i++) {
-        let lineY = (i * height) / gs;
+        let lineY = (i * formatHeight) / gs;
         stroke(lineColor);
         strokeWeight(0.25);
-        line(0, lineY, width, lineY);
+        line(0, lineY, formatWidth, lineY);
     }
 }
 
@@ -187,15 +198,15 @@ function gridY() {
 function gridXY() {
     for (i = 1; i <= gs; i++) {
         for (i = 1; i <= gs; i++) {
-            let lineX = (i * width) / gs;
+            let lineX = (i * formatWidth) / gs;
             stroke(lineColor);
             strokeWeight(0.25);
-            line(lineX, 0, lineX, height);
+            line(lineX, 0, lineX, formatHeight);
 
-            let lineY = (i * height) / gs;
+            let lineY = (i * formatHeight) / gs;
             stroke(lineColor);
             strokeWeight(0.25);
-            line(0, lineY, width, lineY);
+            line(0, lineY, formatWidth, lineY);
         }
     }
 }
@@ -203,10 +214,10 @@ function gridXY() {
 // Description: Null grid
 function gridNull() {
     for (i = 1; i <= gs; i++) {
-        let lineX = (i * width) / gs;
+        let lineX = (i * formatWidth) / gs;
         stroke(bg);
         strokeWeight(0.25);
-        line(lineX, 0, lineX, height);
+        line(lineX, 0, lineX, formatHeight);
     }
 }
 
@@ -216,20 +227,20 @@ function rareShapeDrop() {
     if (ps == 0) {
         //fill(255, 0, 0);
         noStroke();
-        ellipse(random(width), random(height), random(20, 200));
+        ellipse(random(formatWidth), random(formatHeight), random(20, 200));
     } else if (ps == 1) {
         //fill(255, 0, 0);
         noStroke();
-        rect(random(width), random(height), random(20, 300), random(20, 300));
+        rect(random(formatWidth), random(formatHeight), random(20, 300), random(20, 300));
     }
 }
 
 // Description: Draw the gradient within the shape based on colours
 function drawSolidGradient() {
     let gradient = drawingContext.createLinearGradient(
-        width / 2 - 100,
+        formatWidth / 2 - 100,
         200,
-        width / 2 + 200,
+        formatHeight / 2 + 200,
         300
     );
 
@@ -298,11 +309,11 @@ function drawLineGradient() {
     }
 
     let gradient = drawingContext.createLinearGradient(
-        width / 2,
-        height / 2,
+        formatWidth / 2,
+        formatHeight / 2,
         0,
-        width / 2,
-        height / 2,
+        formatWidth / 2,
+        formatHeight / 2,
         360
     );
 
@@ -371,11 +382,11 @@ function shapeGradient() {
     }
 
     let gradient = drawingContext.createLinearGradient(
-        width / 2,
-        height / 2,
+        formatWidth / 2,
+        formatHeight / 2,
         0,
-        width / 2,
-        height / 2,
+        formatWidth / 2,
+        formatHeight / 2,
         360
     );
 
@@ -394,8 +405,8 @@ function noisey(n, s) {
         } else {
             stroke(255, 10);
         }
-        let pointX = random(width);
-        let pointY = random(height);
+        let pointX = random(formatWidth);
+        let pointY = random(formatHeight);
         point(pointX, pointY);
     }
     noLoop();
@@ -426,6 +437,7 @@ function bgSet() {
 
 // Description: Boolean to set the composition shapes
 function shapeSet() {
+    shapeProb = floor(random(2));
     if (shapeProb == 1) {
         return 1; // draw ellipse.
     } else {
