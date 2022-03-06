@@ -82,9 +82,9 @@ function draw() {
     if (shapeType == 0) {
         for (i = 0; i < shapeCount; i++) {
             rectSizeIndex(fxrand());
-            let rectSize1;
+            let rectSize1 = rs;
             rectSizeIndex(fxrand());
-            let rectSize2;
+            let rectSize2 = rs;
             mLayer.rect(random(width), random(height), rectSize1, rectSize2);
             print(rectSize1, rectSize2);
         }
