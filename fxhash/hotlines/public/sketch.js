@@ -14,7 +14,7 @@ let canvasDraw;
 let x, y;
 let x1, y1;
 let bg;
-let shapeProb, bgProb, gridProb, randShapeProb, thicknessProb;
+let bgProb, randShapeProb, thicknessProb;
 let gridDir;
 let gridSegments = [3, 4, 5, 10, 20, 50];
 let segmentCounts = [1, 3, 5, 8, 10];
@@ -36,54 +36,62 @@ let gridLineColor;
 let bgLineColor; 
 let rareStroke;
 let optionNum;
-let shapeCount;
+let n = fxrand();
+let shapeCount = (1 + Math.floor(n * 10));
+let gridProb = Math.floor(n * 4);
+let gridType;
+let shapeProb = Math.floor(n * 2);
+let isGold;
 
 function setup() {
-    //seed = randomSeed(9800); // 9846 shows bug with line not visible
-    canvasFormat();
+    canvasFormat(n);
     createCanvas(formatWidth, formatHeight);
     colorMode(HSB, 360, 100, 100, 100);
     rectMode(CENTER);
-    strokeCapStyle();
+    strokeCapStyle(n);
+    getHotlineStyleFeature(n);
     canvasDraw = createGraphics(formatWidth, formatHeight);
-    x1 = random(formatWidth);
-    y1 = random(formatHeight);
-    gridProb = floor(random(4));
+    x1 = n * formatWidth;
+    y1 = n * formatHeight;
     noiseCount = random(25000, 50000);
     rareStrokeColor = color(45, 60, 80, 100);
 }
 
 function draw() {
-    setBackgroundColor();       // output: bg
+    setBackgroundColor(n);
     background(bg);
-    setBackgroundLineColor();   // output: bgLineColor
+    setBackgroundLineColor(n);
+    getBackgroundFeature(n);
 
     // Layer 1 - Create draw layer. All drawings need to happen here if wanting to be clipped by mask.
-    //canvasDraw.background(50, 100);
     canvasDraw.stroke(bgLineColor);
     canvasDraw.strokeWeight(random(0.05, 0.75));
-    lineTexture(random(10, 10000)); // Look at this function, the CG is modified in the core code.
+    lineTexture(random(10, 10000));
 
     // Layer 2 - Create mask layer
     mLayer = createGraphics(formatWidth, formatHeight);
     mLayer.translate(0, 0); // move the mask into place. 0,0 for full sized CG.
 
     // <----- make any shapes you like to use as a mask below here ----->
-    shapeCount = floor(random(1,10));
+    //shapeCount = floor(random(1,10));
+    print("shapecount is " + shapeCount);
 
     let shapeType = shapeSet();
+    getShapeTypeFeature(shapeProb);
 
     if (shapeType == 0) {
         for (i = 0; i < shapeCount; i++) {
-            rectSizeIndex();
-            let rectSize1 = rs;
-            rectSizeIndex();
-            let rectSize2 = rs;
-            mLayer.rect(random(formatWidth), random(formatHeight), rectSize1, rectSize2);
+            rectSizeIndex(fxrand());
+            let rectSize1;
+            rectSizeIndex(fxrand());
+            let rectSize2;
+            mLayer.rect(random(width), random(height), rectSize1, rectSize2);
+            print(rectSize1, rectSize2);
         }
+        
     } else {
         for (i = 0; i < shapeCount; i++) {
-            mLayer.ellipse(random(formatWidth), random(formatHeight), random(sizeMin, sizeMax));
+            mLayer.ellipse(random(width), random(height), random(n * sizeMin, n * sizeMax));
         }
     }
 
@@ -95,11 +103,10 @@ function draw() {
     image(drawClone, 0, 0);
 
     // <-------------------------------- Draw anything you want on top of this mask layer and below this line ------------------------------------------>
-
-    let gridType = gridSet();   // output: 0,1,2,3
-    gridSegmentIndex();         // output: gs
-    setGridLineColor();         // output: gridLineColor
-
+    gridType = gridSet(gridProb); 
+    gridSegmentIndex(n);
+    setGridLineColor(n);
+    getGridLineColor(n);
     if (gridType == 0) {
         gridX(gridLineColor);
         //print("grid type X");
@@ -113,24 +120,32 @@ function draw() {
         gridNull();
         //print("grid type None");
     }
-
-    //drawLineGradient();
-    shapeGradient();
-    rareShapeDrop();
-    segmentIndex();
-    strokeIndex();
+    getGridTypeFeature(gridProb);
+    shapeGradient(n);
+    rareShapeDrop(n);
+    getRareShapeFeature(n);
+    segmentIndex(n);
+    getSegmentCountFeature(n);
+    strokeIndex(n);
+    getStrokeFeature(n);
     stroke(0);
-    hotLines();
-    noisey(noiseCount, random(0.5, 3.5));
-    noiseStyle()
+    hotLines(n);
+    getDirectionFeature(n);
+    getHotlineThicknessFeature(n);
+    noisey(noiseCount, fxrand() * 5);
+    noiseStyle(n);
+    getFrameFeature(n);
+    // color(0);
+    // stroke(360, 100, 100, 100);
+    // strokeWeight(50);
+    // ellipse(fxrand() * width, fxrand() * height, 500);
     noLoop();
 }
 
 // <----------------------------------------------- Draw Functions ----------------------------------------------------> //
 
 // Description: Portrait 3:2 {1080x720}, Landscape 2:3 {720x1080}, Square 1:1 {1080x1080}
-function canvasFormat(){
-    let n = random(1);
+function canvasFormat(n){
     //formatWidth = [1080, 720, 1080];
     //formatHeight = [720, 1080, 1080];
     if (n > 0.667) {
@@ -162,24 +177,30 @@ function lineTexture(n) {
 
 // Description: Controls the line behavior based on count, strokeweight, and alpha
 // Notes: colors are not working and I'm going to try removing the functionality from this function to try and debug
-function hotLines() {
+function hotLines(n) {
     strokeWeight(lineWeight);
-    let blendProb = random(1);
+    let blendProb = n;
+    let rareblend = fxrand();
     if(optionNum == 0 && blendProb >= 0.50){
         //gold
-        blendMode(HARD_LIGHT);
+        if(rareblend >= 0.98){
+            blendMode(EXCLUSION);
+        }
     } else if(optionNum == 1 && blendProb >= 0.50){
         //black
-        blendMode(HARD_LIGHT);
+        if(rareblend >= 0.50){
+            blendMode(HARD_LIGHT);
+        }
     } 
-    setHotLineColor();
-    thicknessDirection();
-    offsetDistance();
-    lineThickness();
+    setHotLineColor(n);
+    thicknessDirection(n);
+    offsetDistance(n);
+    lineThickness(n);
     let offset = od; 
     for (i = 0; i < segmentCount; i++) {
-        x2 = random(formatWidth);
-        y2 = random(formatHeight);
+        x2 = fxrand() * formatWidth;
+        y2 = fxrand() * formatHeight;
+        print(x2, y2);
         let hotline = new Lines(x1, y1, x2, y2);
         x1 = x2;
         y1 = y2;
@@ -187,31 +208,26 @@ function hotLines() {
 
         //let thicknessDir = [315, 225, 135, 45];
         if(td == 315){
-            print("Offset == 315d");
             for(j=0; j<lt; j++){
                 let thickLine = new Lines(hotline.x1 + offset + j, hotline.y1 + offset + j, hotline.x2 + offset + j, hotline.y2 + offset + j);
                 thickLine.connect();
             }
         } else if(td == 225){
-            print("Offset == 225d")
             for(j=0; j<lt; j++){
                 let thickLine = new Lines(hotline.x1 - offset - j, hotline.y1 + offset + j, hotline.x2 - offset - j, hotline.y2 + offset + j);
                 thickLine.connect();
             }
         } else if(td == 135){
-            print("Offset == 135d")
             for(j=0; j<lt; j++){
                 let thickLine = new Lines(hotline.x1 - offset - j, hotline.y1 - offset - j, hotline.x2 - offset - j, hotline.y2 - offset - j);
                 thickLine.connect();
             }
         } else if(td == 135){
-            print("Offset == 45d")
             for(j=0; j<lt; j++){
                 let thickLine = new Lines(hotline.x1 + offset + j, hotline.y1 - offset - j, hotline.x2 + offset + j, hotline.y2 - offset - j);
                 thickLine.connect();
             } 
         } else {
-            print("Rare twisted line")
             for(j=0; j<lt; j++){
                 let thickLine = new Lines(hotline.x1 + offset + j, hotline.y1 + offset + j, hotline.x2 - offset - j, hotline.y2 - offset - j);
                 thickLine.connect();
@@ -268,40 +284,38 @@ function gridNull() {
 }
 
 // Description: Place random rare shape
-function rareShapeDrop() {
-    let ps = placeRandShape();
+function rareShapeDrop(n) {
+    let ps = placeRandShape(n);
     if (ps == 0) {
-        //fill(255, 0, 0);
         noStroke();
-        ellipse(random(formatWidth), random(formatHeight), random(100, 500));
+        ellipse(fxrand() * width, fxrand() * height, random(100, 500));
     } else if (ps == 1) {
-        //fill(255, 0, 0);
         noStroke();
-        rect(random(formatWidth), random(formatHeight), random(100, 500), random(100, 500));
+        rect(fxrand() * width, fxrand() * height, random(100, 500), random(100, 500));
     }
 }
 
 // Description: Draw the gradient within the line based on colours
-function setHotLineColor() {
+function setHotLineColor(n) {
+    let av = alphaValue(n);
     let color1, color2, color3, color4, color5, color6, color7, color8;
     //colorful
-    color1 = color(250, 50, 100, 100);
-    color2 = color(200, 50, 100, 100);
-    color3 = color(150, 50, 100, 100);
-    color4 = color(100, 50, 100, 100);
-    color5 = color(50, 50, 100, 100);
-    color6 = color(25, 50, 100, 100);
+    color1 = color(250, 50, 100, av);
+    color2 = color(200, 50, 100, av);
+    color3 = color(150, 50, 100, av);
+    color4 = color(100, 50, 100, av);
+    color5 = color(50, 50, 100, av);
+    color6 = color(25, 50, 100, av);
 
     //monochrome
-    color7 = color(0, 0, 80, 0);
+    color7 = color(0, 0, 80, 10);
     color8 = color(0, 0, 10, 70);
 
     let colors = [color1, color2, color3, color4, color5, color6, color7, color8];
 
     // select a random color
-    let randomColor1Index = floor(random(colors.length));
-    let randomColor2Index = floor(random(colors.length));
-    //print(randomColor1Index, randomColor2Index);
+    let randomColor1Index = floor(fxrand() * colors.length);
+    let randomColor2Index = floor(fxrand() * colors.length);
 
     if (randomColor1Index == 0) {
         color1 = colors[0];
@@ -353,7 +367,7 @@ function setHotLineColor() {
 }
 
 // Description: Draw a radial gradient
-function shapeGradient() {
+function shapeGradient(n) {
     let color1, color2, color3, color4, color5, color6, color7, color8;
     //colorful
     color1 = color(250, 50, 100, 100);
@@ -364,15 +378,14 @@ function shapeGradient() {
     color6 = color(25, 50, 100, 100);
 
     //monochrome
-    color7 = color(0, 0, 80, 0);
+    color7 = color(0, 0, 80, 10);
     color8 = color(0, 0, 10, 70);
 
     let colors = [color1, color2, color3, color4, color5, color6, color7, color8];
 
     // select a random color
-    let randomColor1Index = floor(random(colors.length));
-    let randomColor2Index = floor(random(colors.length));
-    //print(randomColor1Index, randomColor2Index);
+    let randomColor1Index = floor(fxrand() * colors.length);
+    let randomColor2Index = floor(fxrand() * colors.length);
 
     if (randomColor1Index == 0) {
         color1 = colors[0];
@@ -427,20 +440,19 @@ function shapeGradient() {
 function noisey(n, s) {
     for (let i = 1; i <= n; i++) {
         strokeWeight(s);
-        if (bg == 255) {
-            stroke(0, 10);
+        if (optionNum == 2) {
+            stroke(10, fxrand() * 10);
         } else {
-            stroke(255, 10);
+            stroke(255, fxrand() * 10);
         }
-        let pointX = random(formatWidth);
-        let pointY = random(formatHeight);
+        let pointX = fxrand() * width;
+        let pointY = fxrand() * height;
         point(pointX, pointY);
     }
     noLoop();
 }
 
-function strokeCapStyle(){
-    let n = random(1);
+function strokeCapStyle(n){
     if (n >= 0.9){
         strokeCap(PROJECT);
     } else{
@@ -448,18 +460,27 @@ function strokeCapStyle(){
     }
 }
 
-function noiseStyle(){
-    let noiseHighlight = random(1);
+// <<<-----fxHash Feature Add for a function returning non-compliant variable type (string, number, bool)----->>>
+function getHotlineStyleFeature(n){
+    if (n >= 0.9){
+        return "Square";
+    } else{
+        return "Round";
+    }
+}
+
+function noiseStyle(n){
+    let noiseHighlight = n;
     if (noiseHighlight >= 0.75){
         blendMode(SOFT_LIGHT);
         ellipse(random(width), random(height), random(100, width));
     }
-    let noiseDifference = random(1);
+    let noiseDifference = n;
     if(noiseDifference >= 0.90){
         blendMode(DIFFERENCE);
         ellipse(random(width), random(height), random(50, 200));
     }
-    let exclusionFrame = random(1);
+    let exclusionFrame = n; 
     if (exclusionFrame >= 0.98){
         rectMode(CENTER);
         blendMode(EXCLUSION);
@@ -467,44 +488,51 @@ function noiseStyle(){
     }
 }
 
-// <--------------------------------------------------------------- User controls -----------------------------------------------------------------> 
-
-function keyPressed() {
-    switch (key) {
-        case 's':
-            save("Hotlines" + ".jpg")
-            break
+// <<<-----fxHash Feature Add for a function returning non-compliant variable type (string, number, bool)----->>>
+function getFrameFeature(n){
+    if (n >= 0.98) {
+        return true;
+    } else {
+        return false;
     }
 }
 
 // <-------------------------------------------------- Probability controls below this section ---------------------------------------------------->
 
 // Description: Sets the color for BG
-function setBackgroundColor() {
-    let n = random(1);
+function setBackgroundColor(n) {
     // special rare bg
     let hue = 50;
     let saturation = 10;
     let brightness = 100;
     let maxAlpha = 100; 
-
     if (n >= 0.90) {
         // Special Gold Background
         bg = color(hue, saturation, brightness, maxAlpha);
-        optionNum = 0; 
+        return optionNum = 0; 
     } else if(n < 0.90 && n >= 0.45){
         // 50/50 for Black BG
         bg = color(0);
-        optionNum = 1; 
+        return optionNum = 1; 
     } else {
         // 50/50 for White BG
-        bg = color(255);
-        optionNum = 2; 
+        bg = color(0, 2, 100, 50);
+        return optionNum = 2; 
     }
 }
 
-function setBackgroundLineColor(){
-    let n = random(1);
+// <<<-----fxHash Feature Add for a function returning non-compliant variable type (string, number, bool)----->>>
+function getBackgroundFeature(n){
+    if (n >= 0.90) {
+        return "Gold";
+    } else if(n < 0.90 && n >= 0.45){
+        return "Black";
+    } else {
+        return "White";
+    }
+}
+
+function setBackgroundLineColor(n){
     if(optionNum == 0 && n >= 0.50){
         // Gold BG + White Lines
         bgLineColor = color(255);
@@ -533,11 +561,10 @@ function setBackgroundLineColor(){
 }
 
 // Description: Sets the color for Gridlines 
-function setGridLineColor(){
-    let n = random(1);
+function setGridLineColor(n){
     let rareProb = 0.85;
 
-    if (optionNum == 0 && n >= 0.85){
+    if (optionNum == 0 && n >= rareProb){
         // Gold BG + Gold Lines
         gridLineColor = rareStrokeColor;
         //print("DEBUG: GridLineColor => GOLD");
@@ -568,9 +595,28 @@ function setGridLineColor(){
     }
 }
 
+// <<<-----fxHash Feature Add for a function returning non-compliant variable type (string, number, bool)----->>>
+function getGridLineColor(n){
+    let rareProb = 0.85
+    if (optionNum == 0 && n >= 0.85){
+        return "Gold";
+    } else if(optionNum == 0 && n >= 0.425 && n < rareProb) {
+        return "White";
+    } else if(optionNum == 0 && n >= 0 && n < 0.425){
+        return "Black";
+    } else if(optionNum == 1 && n >= rareProb){
+        return "Gold";
+    } else if(optionNum == 1 && n >= 0 && n < rareProb){
+        return "White";
+    } else if(optionNum == 2 && n >= rareProb){
+        return "Gold";
+    } else {
+        return "Black";
+    }
+}
+
 // Description: Boolean to set the composition shapes
 function shapeSet() {
-    shapeProb = floor(random(2));
     if (shapeProb == 1) {
         return 1; // draw ellipse.
     } else {
@@ -578,38 +624,66 @@ function shapeSet() {
     }
 }
 
+// <<<-----fxHash Feature Add for a function returning non-compliant variable type (string, number, bool)----->>>
+function getShapeTypeFeature(n){
+    if (n == 1) {
+        return "Circle"; // draw ellipse.
+    } else {
+        return "Rectangle"; // draw rect.
+    }
+}
+
 // Description: Boolean to set the random shape insert
-function placeRandShape() {
-    let randShapeProb = random(1);
-    if (randShapeProb > 0.8) {
-        print("DEGUG: Rare shape Ellipse");
+function placeRandShape(n) {
+    if (n > 0.8) {
         return 0; // draw ellipse
-    } else if (randShapeProb >= 0.5 && randShapeProb < 0.8) {
-        print("DEGUG: Rare shape Rect")
+    } else if (n >= 0.5 && n < 0.8) {
         return 1; // draw rect.
-    } else if (randShapeProb < 0.5) {
-        print("DEGUG: Rare shape FALSE")
+    } else if (n < 0.5) {
         return 2; // draw nothing
     }
 }
 
+// <<<-----fxHash Feature Add for a function returning non-compliant variable type (string, number, bool)----->>>
+function getRareShapeFeature(n){
+    if (n > 0.8) {
+        return "Circle"; // draw ellipse
+    } else if (n >= 0.5 && n < 0.8) {
+        return "Rectangle"; // draw rect.
+    } else if (n < 0.5) {
+        return "None"; // draw nothing
+    }
+}
+
 // Description: Boolean to set the grid direction shapes
-function gridSet() {
-    if (gridProb == 0) {
+function gridSet(n) {
+    if (n == 0) {
         return 0; // X direction
-    } else if (gridProb == 1) {
+    } else if (n == 1) {
         return 1; // Y direction
-    } else if (gridProb == 2) {
+    } else if (n == 2) {
         return 2; // both X and Y directions
     } else {
         return 3; // no grid
     }
 }
 
+// <<<-----fxHash Feature Add for a function returning non-compliant variable type (string, number, bool)----->>>
+function getGridTypeFeature(n){
+    if (n == 0) {
+        return "X"; // X direction
+    } else if (n == 1) {
+        return "Y"; // Y direction
+    } else if (n == 2) {
+        return "XY"; // both X and Y directions
+    } else {
+        return "Inverted"; // no grid
+    }
+}
+
 // Description: Set rect size value based on index by probability
-function rectSizeIndex() {
+function rectSizeIndex(n) {
     //rectSizes = [10, 20, 50, 100, 200, 300, 500];
-    let n = random(1);
     if (n > 0.95) {
         rs = rectSizes[6];
     } else if (n >= 0.75 && n < 0.95) {
@@ -628,9 +702,8 @@ function rectSizeIndex() {
 }
 
 // Description: Set segment count value based on index by probability
-function segmentIndex() {
+function segmentIndex(n) {
     //segmentCounts = [5,10,30,50,100];
-    let n = random(1);
     if (n > 0.95) {
         segmentCount = segmentCounts[4];
     } else if (n >= 0.85 && n < 0.95) {
@@ -642,13 +715,30 @@ function segmentIndex() {
     } else {
         segmentCount = segmentCounts[0];
     }
-    print("DEBUG: HL SegmentCount is " + segmentCount);
+}
+
+// <<<-----fxHash Feature Add for a function returning non-compliant variable type (string, number, bool)----->>>
+function getSegmentCountFeature(n){
+    if (n > 0.95) {
+        feature = segmentCounts[4];
+        return feature;
+    } else if (n >= 0.85 && n < 0.95) {
+        feature = segmentCounts[3];
+        return feature;
+    } else if (n >= 0.6 && n < 0.75) {
+        feature = segmentCounts[2];
+        return feature;
+    } else if (n >= 0.2 && n < 0.6) {
+        feature = segmentCounts[1];
+        return feature;
+    } else {
+        feature = segmentCounts[0];
+        return feature;
+    }
 }
 
 // Description: Set lineweight value based on index by probability
-function strokeIndex() {
-    //lineWeights = [0.05, 0.15, 0.50, 1, 5, 10, 20];
-    let n = random(1);
+function strokeIndex(n) {
     if (n > 0.95) {
         lineWeight = lineWeights[0];
     } else if (n >= 0.85 && n < 0.95) {
@@ -664,13 +754,37 @@ function strokeIndex() {
     } else {
         lineWeight = lineWeights[6];
     }
-    print("DEBUG: HL LineWeight is " + lineWeight);
+}
+
+// <<<-----fxHash Feature Add for a function returning non-compliant variable type (string, number, bool)----->>>
+function getStrokeFeature(n){
+    if (n > 0.95) {
+        lineWeight = lineWeights[0];
+        return lineWeight;
+    } else if (n >= 0.85 && n < 0.95) {
+        lineWeight = lineWeights[1];
+        return lineWeight;
+    } else if (n >= 0.65 && n < 0.85) {
+        lineWeight = lineWeights[2];
+        return lineWeight;
+    } else if (n >= 0.45 && n < 0.65) {
+        lineWeight = lineWeights[3];
+        return lineWeight;
+    } else if (n >= 0.35 && n < 0.45) {
+        lineWeight = lineWeights[4];
+        return lineWeight;
+    } else if (n >= 0.15 && n < 0.35) {
+        lineWeight = lineWeights[5];
+        return lineWeight;
+    } else {
+        lineWeight = lineWeights[6];
+        return lineWeight;
+    }
 }
 
 // Description: Set grid segment value based on index by probability
-function gridSegmentIndex() {
+function gridSegmentIndex(n) {
     //let gridSegments = [3,4,5,10,20,50];
-    let n = random(1);
     if (n > 0.95) {
         gs = gridSegments[5];
     } else if (n >= 0.75 && n < 0.95) {
@@ -687,23 +801,21 @@ function gridSegmentIndex() {
 }
 
 // Description: Set alpha value based on index by probability
-function alphaValue() {
-    //let alphaOptions = [100, 200, 250];
-    let n = random(1);
+function alphaValue(n) {
     if (n > 0.75) {
         av = alphaOptions[2];
+        return av; 
     } else if (n >= 0.45 && n < 0.75) {
         av = alphaOptions[1];
+        return av;
     } else {
         av = alphaOptions[0];
+        return av;
     }
-    print("DEBUG: alpha is " + av);
 }
 
 // Description: Set alpha value based on index by probability
-function thicknessDirection() {
-    //let thicknessDir = [315, 225, 135, 45];
-    let n = random(1);
+function thicknessDirection(n) {
     if (n >= 0.75) {
         td = thicknessDir[0];
     } else if(n >= 0.5 && n < 0.75){
@@ -717,10 +829,24 @@ function thicknessDirection() {
     }
 }
 
+// <<<-----fxHash Feature Add for a function returning non-compliant variable type (string, number, bool)----->>>
+function getDirectionFeature(n){
+    if (n >= 0.75) {
+        return 0;
+    } else if(n >= 0.5 && n < 0.75){
+        return 1;
+    } else if(n >= 0.25 && n < 0.50){
+        return 2;
+    } else if(n >= 0.07 && n < 0.25){
+        return 3;
+    } else {
+        return 4;
+    }
+}
+
 // Description: Set alpha value based on index by probability
-function offsetDistance() {
+function offsetDistance(n) {
     //let offsetDist = [0, 10, 25, 100];
-    let n = random(1);
     if (n > 0.75) {
         od = offsetDist[0];
     } else if(n >= 0.50 && n < 0.75){
@@ -734,10 +860,7 @@ function offsetDistance() {
 }
 
 // Description: Set hotline thickness
-function lineThickness() {
-    //let lineThicknesses = [5, 15, 25, 100, 500];
-
-    let n = random(1);
+function lineThickness(n) {
     if (n > 0.95) {
         lt = lineThicknesses[4];
     } else if(n >= 0.70 && n < 0.95){
@@ -749,7 +872,21 @@ function lineThickness() {
     } else{
         lt = lineThicknesses[0];
     } 
-    print("DEBUG: Line thickness is " + lt);
+}
+
+// <<<-----fxHash Feature Add for a function returning non-compliant variable type (string, number, bool)----->>>
+function getHotlineThicknessFeature(n){
+    if (n > 0.95) {
+        return lineThicknesses[4];
+    } else if(n >= 0.70 && n < 0.95){
+        return lineThicknesses[3];
+    } else if(n >= 0.40 && n < 0.70){
+        return lineThicknesses[2];
+    } else if (n >= 0.15 && n < 0.40){
+        return lineThicknesses[1];
+    } else{
+        return lineThicknesses[0];
+    } 
 }
 
 // <----- Object Classes below this section ----->
@@ -764,3 +901,13 @@ class Lines {
         line(this.x1, this.y1, this.x2, this.y2);
     }
   }
+
+  // <--------------------------------------------------------------- User controls -----------------------------------------------------------------> 
+
+function keyPressed() {
+    switch (key) {
+        case 's':
+            save("Hotlines" + ".jpg")
+            break
+    }
+}
