@@ -1,6 +1,6 @@
 // these are the variables you can use as inputs to your algorithms
-console.log(fxhash)   // the 64 chars hex number fed to your algorithm
-console.log(fxrand()) // deterministic PRNG function, use it instead of Math.random()
+//console.log(fxhash)   // the 64 chars hex number fed to your algorithm
+//console.log(fxrand()) // deterministic PRNG function, use it instead of Math.random()
 
 // note about the fxrand() function 
 // when the "fxhash" is always the same, it will generate the same sequence of
@@ -26,13 +26,12 @@ window.$fxhashFeatures = {
   "Basic Shape Count": shapeCount,
   "Rare Shape Type": getRareShapeFeature(n),
   "Color Frame": getFrameFeature(n),
-  "fxrand value": n
+  "Format": getFormat(n)
 }
 
 // this code writes the values to the DOM as an example
 const container = document.createElement("div")
 container.innerText = `
-  random hash: ${fxhash}\n
   Hotline Segment Count: ${window.$fxhashFeatures["Hotline Segment Count"]}\n
   Hotline Lineweight: ${window.$fxhashFeatures["Hotline Lineweight"]}\n
   Hotline Offset Direction: ${window.$fxhashFeatures["Hotline Offset Direction"]}\n
@@ -44,6 +43,6 @@ container.innerText = `
   Basic Shape Count: ${window.$fxhashFeatures["Basic Shape Count"]}\n
   Rare Shape Type: ${window.$fxhashFeatures["Rare Shape Type"]}\n
   Color Frame: ${window.$fxhashFeatures["Color Frame"]}\n
-  fxrand value: ${window.$fxhashFeatures["fxrand value"]}\n
+  Format: ${window.$fxhashFeatures["Format"]}\n
 `
 //document.body.prepend(container)
