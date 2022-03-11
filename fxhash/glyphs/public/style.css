@@ -1,6 +1,8 @@
 body {
-  background-color: lightblue;
-
-  /* leave it to hide the scrollbars */
-  overflow: hidden;
+    background-color: rgb(255, 255, 255);
+    /* leave it to hide the scrollbars */
+    overflow: hidden;
+    justify-content: center;
+    align-items: center;
+    display: flex;
 }

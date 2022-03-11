@@ -26,4 +26,4 @@ container.innerText = `
   random hash: ${fxhash}\n
   some pseudo random values: [ ${fxrand()}, ${fxrand()}, ${fxrand()}, ${fxrand()}, ${fxrand()},... ]\n
 `
-document.body.prepend(container)
+//document.body.prepend(container)
