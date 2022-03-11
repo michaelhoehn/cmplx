@@ -1,63 +1,69 @@
 // Please review LICENSE.md for usage limitations
 
 let bg = 255;
-let yPadding = 100;
-let lineCount = 1;
-let amplitude = 1 + Math.floor(fxrand()*150);
-let rowCount = 5;
+let lineCount = 2 + Math.floor(fxrand()*20);
+let amplitude = 20 + Math.floor(fxrand()*100);
+let rowCount = 1+Math.floor(fxrand()*10);
 let ySpacing = 50;
-let resolution = 20 + Math.floor(fxrand()*100);
+let resolution = 40; // + Math.floor(fxrand()*75)
 let period = 1 + Math.floor(fxrand()*10);
-// let num = 1 + Math.floor(fxrand()*5);
+let gridSpacing = 1 + Math.floor(fxrand()*10);
+let padding = 200;
 
 
 function setup() {
     createCanvas(1000,1000);
+    colorMode(HSB, 360, 100, 100, 100);
     rectMode(CENTER);
     background(bg);
 }
 
 function draw() {
-    
 
-    //strokeWeight(100);
-    //stroke(bg);
-    //rect(width/2, height/2, width, height);
-    strokeWeight(1);
-    stroke(0);
     noFill();
 
-
-    // for row count > make lines 
     for(let i = 1; i <= rowCount; i++){
-        beginShape();
-        // for 
-        for(let j = 0; j <= resolution; j++){
-            let y = i * height/(rowCount + 1);
-            curveVertex((j * width/resolution), y + fxrand() * amplitude);
-            noLoop();
-        }
-        endShape();
-    }
 
-    // for(let i = 0; i<lineCount; i++){
-    //     beginShape();
-    //     for(let i = 0; i<=num; i++){
-    //         curveVertex(i * width/num * spacing, yPadding + fxrand() * amplitude);
-    //         noLoop();
-    //     }
-    //     endShape();
-    // }
+        for(let t = 0; t < lineCount; t++){
+            strokeWeight(0.10*(t+1));
+            stroke(200, 0, 0, 50 * (t+20));
+            beginShape();
+            for(let j = 0; j <= resolution; j++){
+                curveVertex((j * width/resolution), (i * height/(rowCount + 1)) + fxrand() * amplitude);
+                noLoop();
+            }
+            endShape();
+        }
+    }
 
     // masking
-    noStroke();
-    let gridSpacing = 5;
+    let sw = 10 + fxrand() * 50;
+    let gridCut = 200; //+ fxrand();
     for(let i = 0; i <= gridSpacing; i++){
         let lineX = (i * width) / gridSpacing;
-        strokeWeight(75);
-        stroke(bg);
+        strokeCap(SQUARE);
+        strokeWeight(sw);
+        stroke(bg); //bg
         line(lineX, 0, lineX, height);
     }
+
+    blendMode(OVERLAY);
+    let randX = fxrand() * width;
+    let randY = fxrand() * height;
+    let randW1 = 50 + fxrand() * 500;
+    let randW2 = 50 + fxrand() * 500;
+    noStroke();
+    fill(200,35,100,100);
+    rect(randX, randY, randW1, randW2);
+
+
+    let randX1 = fxrand() * width;
+    let randY1 = fxrand() * height;
+    let randR = 500 + fxrand() * 2000;
+    noStroke();
+    fill(200,75,100,100);
+    ellipse(randX1, randY1, randR);
+
 
     // // Layer 1 - Create draw layer. All drawings need to happen here if wanting to be clipped by mask.
     // canvasDraw.stroke(bgLineColor);
