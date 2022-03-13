@@ -1,79 +1,62 @@
 // Please review LICENSE.md for usage limitations
 
+// to do 
+// make masking lines all different sizes based on count
+// add random lines as an option instead of the squiggles
+// add random shapes instead of lines
+// add small marker sketch squiggles
+// add dot grids
+
 let n = fxrand();
 let lineCount = 20; //2 + Math.floor(fxrand()*20);
-let amplitude = 20 + Math.floor(fxrand()*75);
-let rowCount = 3 + Math.floor(fxrand()*10);
+let amplitude = 20 + Math.floor(fxrand() * 75);
+let rowCount = 3 + Math.floor(fxrand() * 10);
 let ySpacing = 50;
 let resolution = 50; // + Math.floor(fxrand()*75)
-let period = 1 + Math.floor(fxrand()*10);
-let gridSpacing = 1 + Math.floor(fxrand()*10);
+let period = 1 + Math.floor(fxrand() * 10);
+let xGridSpacing = 5 + Math.floor(fxrand() * 20); // 1 to 10
+let yGridSpacing = 5 + Math.floor(fxrand() * 20);
 let padding = 200;
 let x1, y1;
 let color1, color2, color3, color4, color5, color6, color7, color8, color9;
 let noiseRand = fxrand();
 let noiseCount = 50000 + fxrand() * 300000;
+let glyphOption;
 
 function setup() {
-    createCanvas(1000,1000);
+    createCanvas(1000, 1000);
     colorMode(HSB, 360, 100, 100, 100);
     rectMode(CENTER);
 
     // color background function
     setBackgroundColor(n);
     background(bg);
-    x1 = fxrand()*width; 
-    y1 = fxrand()*height;
+    x1 = fxrand() * width;
+    y1 = fxrand() * height;
 }
 
 function draw() {
 
     noFill();
 
-    for(let i = 1; i < rowCount; i++){
-        for(let t = 0; t < lineCount; t++){
-            strokeWeight(0.15*(t+1));
-            if(optionNum == 0){
-                // gold bg
-                stroke(50,10,0,2 * (t+20));
-            } else if(optionNum == 1){
-                // black bg
-                stroke(360,0,100,2 * (t+20));
-            } else if(optionNum == 2){
-                // white bg
-                stroke(200, 0, 0, 2 * (t+20));
-            }        
-            beginShape();
-            for(let j = 0; j <= resolution; j++){
-                //curveVertex(x,y);
-                //let paddingWidth = width - (padding/2)
-                //let randPt = fxrand()*width;
-                //curveVertex(width, height);
-                curveVertex((j * width/resolution), ((i * height/rowCount) + fxrand() * amplitude) - amplitude/2);
-                noLoop();
-            }
-            endShape();
-        }
-    }
+    glyphs();
 
     // masking
-    let sw = 5 + fxrand() * 25;
-    for(let i = 0; i <= gridSpacing; i++){
-        let lineX = (i * width) / gridSpacing;
-        strokeCap(SQUARE);
-        strokeWeight(sw);
-        stroke(bg); //bg
-        line(lineX, 0, lineX, height);
+    if (glyphOption == 0) {
+        gridX();
+    } else if (glyphOption == 1) {
+        gridX();
+        gridY();
     }
 
     // Erased Parts
-    blendMode(NORMAL);
+    blendMode(BLEND);
     stroke(bg);
     //stroke(360, 0, 100, 100);
-    directionalHatch(0.5+fxrand()*5);
+    directionalHatch(0.5 + fxrand() * 5);
 
     // add noise
-    stroke(360,100,100,100);
+    stroke(360, 100, 100, 100);
     noisey(noiseCount, 0.05 + fxrand() * 1, noiseRand);
 
     //blend shapes 
@@ -81,10 +64,10 @@ function draw() {
     fill(bg);
     shapeGradient();
     noStroke();
-    rect(fxrand()*width, fxrand()*height, 100+fxrand()*width, 100+fxrand()*height);
+    rect(fxrand() * width, fxrand() * height, 100 + fxrand() * width, 100 + fxrand() * height);
     shapeGradient();
     //blendMode(OVERLAY);
-    ellipse(fxrand()*width, fxrand()*height, 300+fxrand()*width);
+    ellipse(fxrand() * width, fxrand() * height, 300 + fxrand() * width);
 
 
 
@@ -93,59 +76,141 @@ function draw() {
 
 // <----------------------------------------------- Draw Functions ----------------------------------------------------> //
 
+function glyphs() {
+    let n = fxrand();
+    if (n >= 0.50) {
+        // draw squiggles
+        for (let i = 1; i < rowCount; i++) {
+            for (let t = 0; t < lineCount; t++) {
+                strokeWeight(0.15 * (t + 1));
+                if (optionNum == 0) {
+                    // gold bg
+                    stroke(50, 10, 0, 2 * (t + 20));
+                } else if (optionNum == 1) {
+                    // black bg
+                    stroke(360, 0, 100, 2 * (t + 20));
+                } else if (optionNum == 2) {
+                    // white bg
+                    stroke(200, 0, 0, 2 * (t + 20));
+                }
+                beginShape();
+                for (let j = 0; j <= resolution; j++) {
+                    //curveVertex(x,y);
+                    //let paddingWidth = width - (padding/2)
+                    //let randPt = fxrand()*width;
+                    //curveVertex(width, height);
+                    curveVertex((j * width / resolution), ((i * height / rowCount) + fxrand() * amplitude) - amplitude / 2);
+                    noLoop();
+                }
+                endShape();
+            }
+        }
+        return glyphOption = 0;
+
+    } else if (n < 0.50) {
+        // draw straight random lines
+        let numLines = 20;
+        for (let i = 0; i < numLines; i++) {
+            strokeWeight(fxrand() * i / 2);
+            if (optionNum == 0) {
+                // gold bg
+                stroke(50, 10, 0, 50);
+            } else if (optionNum == 1) {
+                // black bg
+                stroke(360, 0, 100, 50);
+            } else if (optionNum == 2) {
+                // white bg
+                stroke(200, 0, 0, 50);
+            }
+            for (let i = 0; i <= numLines; i++) {
+                let x2 = fxrand() * width;
+                let y2 = fxrand() * height;
+                line(x1, y1, x2, y2);
+                x1 = x2;
+                y1 = y2;
+            }
+        }
+
+        return glyphOption = 1;
+    }
+}
+
+// Description: Creates a grid with Y Direction offset
+function gridY() {
+    let sw = 5 + fxrand() * 25;
+    for (i = 0; i <= yGridSpacing; i++) {
+        let lineY = (i * height) / yGridSpacing;
+        strokeCap(SQUARE);
+        stroke(bg);
+        strokeWeight(sw);
+        line(0, lineY, width, lineY);
+    }
+}
+
+function gridX() {
+    let sw = 5 + fxrand() * 25;
+    for (let i = 0; i <= xGridSpacing; i++) {
+        let lineX = (i * width) / xGridSpacing;
+        strokeCap(SQUARE);
+        strokeWeight(sw);
+        stroke(bg);
+        line(lineX, 0, lineX, height);
+    }
+}
+
 // Description: fxrand driven placement of shapes origins
-function randomPlacement(){
+function randomPlacement() {
     rX = fxrand() * width;
     rY = fxrand() * height;
 }
 
-function randomSizing(){
+function randomSizing() {
     s = 20 + fxrand() * 350;
 }
 
 // Description: Sets probability of directional hatch
-function directionalHatch(sw){
+function directionalHatch(sw) {
     let n = fxrand();
     let padding = 5;
     let spacingMax = 500;
     let spacingMin = 300;
     strokeWeight(sw);
-    if(n <= 0.90){
-        for(let i = 0; i < height; i++){
+    if (n <= 0.90) {
+        for (let i = 0; i < height; i++) {
             line(0, 0, width + padding, i);
-            i+=spacingMin + fxrand() * spacingMax;
+            i += spacingMin + fxrand() * spacingMax;
         }
-        for(let i = 0; i < height; i++){
+        for (let i = 0; i < height; i++) {
             line(width, 0, -padding, i);
-            i+=spacingMin + fxrand() * spacingMax;
-        }   
-        for(let i = 0; i < height; i++){
+            i += spacingMin + fxrand() * spacingMax;
+        }
+        for (let i = 0; i < height; i++) {
             line(0, height, width + padding, i);
-            i+=spacingMin + fxrand() * spacingMax;
-        } 
-        for(let i = 0; i < height; i++){
+            i += spacingMin + fxrand() * spacingMax;
+        }
+        for (let i = 0; i < height; i++) {
             line(width, height, padding, i);
-            i+=spacingMin + fxrand() * spacingMax;
+            i += spacingMin + fxrand() * spacingMax;
         }
-    } else if(n >= 0.675 && n < 0.90){
-        for(let i = 0; i < height; i++){
+    } else if (n >= 0.675 && n < 0.90) {
+        for (let i = 0; i < height; i++) {
             line(0, 0, width + padding, i);
-            i+=spacingMin + fxrand() * spacingMax;
+            i += spacingMin + fxrand() * spacingMax;
         }
-    } else if(n >= 0.45 && n < 0.675){
-        for(let i = 0; i < height; i++){
+    } else if (n >= 0.45 && n < 0.675) {
+        for (let i = 0; i < height; i++) {
             line(width, 0, -padding, i);
-            i+=spacingMin + fxrand() * spacingMax;
-        }   
-    } else if(n >= 22.5 && n < 0.45){
-        for(let i = 0; i < height; i++){
+            i += spacingMin + fxrand() * spacingMax;
+        }
+    } else if (n >= 22.5 && n < 0.45) {
+        for (let i = 0; i < height; i++) {
             line(0, height, width + padding, i);
-            i+=spacingMin + fxrand() * spacingMax;
-        } 
+            i += spacingMin + fxrand() * spacingMax;
+        }
     } else {
-        for(let i = 0; i < height; i++){
+        for (let i = 0; i < height; i++) {
             line(width, height, padding, i);
-            i+=spacingMin + fxrand() * spacingMax;
+            i += spacingMin + fxrand() * spacingMax;
         }
     }
 }
@@ -155,10 +220,10 @@ function noisey(count, strokeW, noiseRand) {
     for (let i = 1; i <= count; i++) {
         strokeWeight(strokeW);
         if (noiseRand >= 0.75) {
-            stroke(250,90,100,20);
-        } else if (noiseRand >= 0.50 && noiseRand < 0.75){
+            stroke(250, 90, 100, 20);
+        } else if (noiseRand >= 0.50 && noiseRand < 0.75) {
             stroke(250, 50, 100, 20);
-        } else if(noiseRand >= 0.25 && noiseRand < 0.50){
+        } else if (noiseRand >= 0.25 && noiseRand < 0.50) {
             stroke(0, 0, 100, 20);
         } else {
             stroke(360, 50, 100, 20);
@@ -250,36 +315,36 @@ function setBackgroundColor(n) {
     let hue = 50;
     let saturation = 10;
     let brightness = 100;
-    let maxAlpha = 100; 
+    let maxAlpha = 100;
     if (n >= 0.9) {
         // Special Gold Background
         bg = color(hue, saturation, brightness, maxAlpha);
-        return optionNum = 0; 
-    } else if(n < 0.9 && n >= 0.45){
+        return optionNum = 0;
+    } else if (n < 0.9 && n >= 0.45) {
         // 50/50 for Black BG
         bg = color(0);
-        return optionNum = 1; 
-    }else if(n < 0.45 && n >= 0){
+        return optionNum = 1;
+    } else if (n < 0.45 && n >= 0) {
         // 50/50 for White BG
         bg = color(0, 2, 100, 100);
-        return optionNum = 2; 
+        return optionNum = 2;
     }
 }
 
 // <----- Object Classes below this section ----->
 class Lines {
     constructor(x1, y1, x2, y2) {
-      this.x1 = x1;
-      this.y1 = y1;
-      this.x2 = x2;
-      this.y2 = y2;
+        this.x1 = x1;
+        this.y1 = y1;
+        this.x2 = x2;
+        this.y2 = y2;
     }
     connect() {
         line(this.x1, this.y1, this.x2, this.y2);
     }
-  }
+}
 
-  // <--------------------------------------------------------------- User controls -----------------------------------------------------------------> 
+// <--------------------------------------------------------------- User controls -----------------------------------------------------------------> 
 
 function keyPressed() {
     switch (key) {
@@ -289,57 +354,48 @@ function keyPressed() {
     }
 }
 
-    // add gradient over the whole thing
+// add gradient over the whole thing
 
-    // blendMode(OVERLAY);
-    // let randX = fxrand() * width;
-    // let randY = fxrand() * height;
-    // let randW1 = 50 + fxrand() * 500;
-    // let randW2 = 50 + fxrand() * 500;
-    // noStroke();
-    // fill(200,35,100,100);
-    // rect(randX, randY, randW1, randW2);
+// blendMode(OVERLAY);
+// let randX = fxrand() * width;
+// let randY = fxrand() * height;
+// let randW1 = 50 + fxrand() * 500;
+// let randW2 = 50 + fxrand() * 500;
+// noStroke();
+// fill(200,35,100,100);
+// rect(randX, randY, randW1, randW2);
 
-    // let randX1 = fxrand() * width;
-    // let randY1 = fxrand() * height;
-    // let randR = 500 + fxrand() * 2000;
-    // noStroke();
-    // fill(200,75,100,100);
-    // ellipse(randX1, randY1, randR);
+// let randX1 = fxrand() * width;
+// let randY1 = fxrand() * height;
+// let randR = 500 + fxrand() * 2000;
+// noStroke();
+// fill(200,75,100,100);
+// ellipse(randX1, randY1, randR);
 
-    // blendMode(NORMAL);
-    // noFill();
-    // stroke(360, 0, 50, 10);
-    // strokeWeight(5);
-    // rect(width/2, height/2, width, height);
-
-        // // random lines
-    // let numLines = 5; 
-    // strokeWeight(10);
-    // for(let i = 0; i <= numLines; i++){
-    //     let x2 = fxrand() * width;
-    //     let y2 = fxrand() * height;
-    //     line(x1, y1, x2, y2);
-    //     x1 = x2;
-    //     y1 = y2;
-    // }
+// blendMode(NORMAL);
+// noFill();
+// stroke(360, 0, 50, 10);
+// strokeWeight(5);
+// rect(width/2, height/2, width, height);
 
 
-    // // Layer 1 - Create draw layer. All drawings need to happen here if wanting to be clipped by mask.
-    // canvasDraw.stroke(bgLineColor);
-    // canvasDraw.strokeWeight(bgStrokeWeight);
-    // lineTexture(lineTextureCount);
-
-    // // Layer 2 - Create mask layer
-    // mLayer = createGraphics(formatWidth, formatHeight);
-    // mLayer.translate(0, 0); // move the mask into place. 0,0 for full sized CG.
-
-    // // <----- make any shapes you like to use as a mask below here ----->
 
 
-    // // Make the mask layer an actual mask.
-    // drawClone = canvasDraw.get();
-    // drawClone.mask(mLayer.get());
+// // Layer 1 - Create draw layer. All drawings need to happen here if wanting to be clipped by mask.
+// canvasDraw.stroke(bgLineColor);
+// canvasDraw.strokeWeight(bgStrokeWeight);
+// lineTexture(lineTextureCount);
 
-    // // Instantiate the mask layer.
-    // image(drawClone, 0, 0);
+// // Layer 2 - Create mask layer
+// mLayer = createGraphics(formatWidth, formatHeight);
+// mLayer.translate(0, 0); // move the mask into place. 0,0 for full sized CG.
+
+// // <----- make any shapes you like to use as a mask below here ----->
+
+
+// // Make the mask layer an actual mask.
+// drawClone = canvasDraw.get();
+// drawClone.mask(mLayer.get());
+
+// // Instantiate the mask layer.
+// image(drawClone, 0, 0);
