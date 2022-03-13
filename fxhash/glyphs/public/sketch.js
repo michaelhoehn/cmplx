@@ -1,6 +1,6 @@
 // Please review LICENSE.md for usage limitations
 
-let bg = 255;
+let n = fxrand();
 let lineCount = 20; //2 + Math.floor(fxrand()*20);
 let amplitude = 20 + Math.floor(fxrand()*75);
 let rowCount = 3 + Math.floor(fxrand()*10);
@@ -20,6 +20,7 @@ function setup() {
     rectMode(CENTER);
 
     // color background function
+    setBackgroundColor(n);
     background(bg);
     x1 = fxrand()*width; 
     y1 = fxrand()*height;
@@ -32,7 +33,16 @@ function draw() {
     for(let i = 1; i < rowCount; i++){
         for(let t = 0; t < lineCount; t++){
             strokeWeight(0.15*(t+1));
-            stroke(200, 0, 0, 2 * (t+20));
+            if(optionNum == 0){
+                // gold bg
+                stroke(50,10,0,2 * (t+20));
+            } else if(optionNum == 1){
+                // black bg
+                stroke(360,0,100,2 * (t+20));
+            } else if(optionNum == 2){
+                // white bg
+                stroke(200, 0, 0, 2 * (t+20));
+            }        
             beginShape();
             for(let j = 0; j <= resolution; j++){
                 //curveVertex(x,y);
@@ -58,7 +68,8 @@ function draw() {
 
     // Erased Parts
     blendMode(NORMAL);
-    stroke(360, 0, 100, 100);
+    stroke(bg);
+    //stroke(360, 0, 100, 100);
     directionalHatch(0.5+fxrand()*5);
 
     // add noise
@@ -72,7 +83,7 @@ function draw() {
     noStroke();
     rect(fxrand()*width, fxrand()*height, 100+fxrand()*width, 100+fxrand()*height);
     shapeGradient();
-    //blendMode(SCREEN);
+    //blendMode(OVERLAY);
     ellipse(fxrand()*width, fxrand()*height, 300+fxrand()*width);
 
 
@@ -250,7 +261,7 @@ function setBackgroundColor(n) {
         return optionNum = 1; 
     }else if(n < 0.45 && n >= 0){
         // 50/50 for White BG
-        bg = color(0, 2, 100, 50);
+        bg = color(0, 2, 100, 100);
         return optionNum = 2; 
     }
 }
