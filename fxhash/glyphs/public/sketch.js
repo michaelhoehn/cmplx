@@ -22,6 +22,9 @@ let color1, color2, color3, color4, color5, color6, color7, color8, color9;
 let noiseRand = fxrand();
 let noiseCount = 50000 + fxrand() * 300000;
 let glyphOption;
+let count = 10000;
+let x = 500;
+let y = 500;
 
 function setup() {
     createCanvas(1000, 1000);
@@ -37,6 +40,9 @@ function setup() {
 
 function draw() {
 
+
+
+
     noFill();
 
     glyphs();
@@ -47,19 +53,47 @@ function draw() {
     } else if (glyphOption == 1) {
         gridX();
         gridY();
+    } else if (glyphOption == 2){
+        gridX();
+        gridY();
     }
+
+    // noFill();
+    // beginShape();
+    // stroke(bg);
+    // strokeWeight(5);
+    // for (i=0; i<count; i++){
+    //   vertex(x,y);
+    //   const r = floor(random(4));
+    //   switch (r) {
+    //     case 0:
+    //       x = x + 25;
+    //       break;
+    //     case 1:
+    //       x = x - 25;
+    //       break;
+    //     case 2:
+    //       y = y + 25;
+    //       break;
+    //     case 3:
+    //       y = y - 25;
+    //       break;
+    //   }
+    // }
+    // endShape(CLOSE);
+    // noLoop();
 
     // Erased Parts
     blendMode(BLEND);
+    
     stroke(bg);
-    //stroke(360, 0, 100, 100);
     directionalHatch(0.5 + fxrand() * 5);
 
-    // add noise
+    // // add noise
     stroke(360, 100, 100, 100);
     noisey(noiseCount, 0.05 + fxrand() * 1, noiseRand);
 
-    //blend shapes 
+    // //blend shapes 
     blendMode(SOFT_LIGHT);
     fill(bg);
     shapeGradient();
@@ -78,7 +112,7 @@ function draw() {
 
 function glyphs() {
     let n = fxrand();
-    if (n >= 0.50) {
+    if (n >= 0.666) {
         // draw squiggles
         for (let i = 1; i < rowCount; i++) {
             for (let t = 0; t < lineCount; t++) {
@@ -95,10 +129,6 @@ function glyphs() {
                 }
                 beginShape();
                 for (let j = 0; j <= resolution; j++) {
-                    //curveVertex(x,y);
-                    //let paddingWidth = width - (padding/2)
-                    //let randPt = fxrand()*width;
-                    //curveVertex(width, height);
                     curveVertex((j * width / resolution), ((i * height / rowCount) + fxrand() * amplitude) - amplitude / 2);
                     noLoop();
                 }
@@ -107,7 +137,7 @@ function glyphs() {
         }
         return glyphOption = 0;
 
-    } else if (n < 0.50) {
+    } else if (n < 0.666 && n >= 0.333) {
         // draw straight random lines
         let numLines = 20;
         for (let i = 0; i < numLines; i++) {
@@ -130,8 +160,44 @@ function glyphs() {
                 y1 = y2;
             }
         }
-
         return glyphOption = 1;
+    } else if( n < 0.333){
+
+        // make this a function
+        noFill();
+        beginShape();
+        strokeWeight(0.05 + fxrand()*5);
+        if (optionNum == 0) {
+            // gold bg
+            stroke(50, 10, 0, 50);
+        } else if (optionNum == 1) {
+            // black bg
+            stroke(360, 0, 100, 50);
+        } else if (optionNum == 2) {
+            // white bg
+            stroke(200, 0, 0, 50);
+        }
+        for (i=0; i<count; i++){
+          vertex(x,y);
+          const r = floor(random(4));
+          switch (r) {
+            case 0:
+              x = x + 10;
+              break;
+            case 1:
+              x = x - 10;
+              break;
+            case 2:
+              y = y + 10;
+              break;
+            case 3:
+              y = y - 10;
+              break;
+          }
+        }
+        endShape();
+        //noLoop();
+        return glyphOption = 2;
     }
 }
 
@@ -330,6 +396,8 @@ function setBackgroundColor(n) {
         return optionNum = 2;
     }
 }
+
+
 
 // <----- Object Classes below this section ----->
 class Lines {
