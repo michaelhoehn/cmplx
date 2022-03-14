@@ -6,6 +6,8 @@
 // add random shapes instead of lines
 // add small marker sketch squiggles
 // add dot grids
+// make random walker a function to be called multiple times from different starting points
+// eraser lines to be different lineweights instead of a single lineweight
 
 let n = fxrand();
 let lineCount = 20; //2 + Math.floor(fxrand()*20);
@@ -14,8 +16,8 @@ let rowCount = 3 + Math.floor(fxrand() * 10);
 let ySpacing = 50;
 let resolution = 50; // + Math.floor(fxrand()*75)
 let period = 1 + Math.floor(fxrand() * 10);
-let xGridSpacing = 5 + Math.floor(fxrand() * 20); // 1 to 10
-let yGridSpacing = 5 + Math.floor(fxrand() * 20);
+let xGridSpacing = 2 + Math.floor(fxrand() * 20); // 1 to 10
+let yGridSpacing = 2 + Math.floor(fxrand() * 20);
 let padding = 200;
 let x1, y1;
 let color1, color2, color3, color4, color5, color6, color7, color8, color9;
