@@ -8,6 +8,11 @@
 // add dot grids
 // make random walker a function to be called multiple times from different starting points
 // eraser lines to be different lineweights instead of a single lineweight
+// animate the render
+// rotate random walker 
+// random lines glyphs in 4 quadrants 
+// zoom over and click to save image
+// splash of color like red / blue / yellow / green square or polygon
 
 let n = fxrand();
 let lineCount = 20; //2 + Math.floor(fxrand()*20);
@@ -25,11 +30,12 @@ let noiseRand = fxrand();
 let noiseCount = 50000 + fxrand() * 300000;
 let glyphOption;
 let count = 10000;
-let x = 500;
-let y = 500;
+let x;
+let y;
+let xRand, yRand;
 
 function setup() {
-    createCanvas(1000, 1000);
+    createCanvas(innerWidth, innerHeight);
     colorMode(HSB, 360, 100, 100, 100);
     rectMode(CENTER);
 
@@ -38,19 +44,18 @@ function setup() {
     background(bg);
     x1 = fxrand() * width;
     y1 = fxrand() * height;
+    x = width/2;
+    y = height/2;
+    xRand = fxrand() * width;
+    yRand = fxrand() * height;
 }
 
 function draw() {
 
-
-
-
     noFill();
-
     glyphs();
-
     // masking
-    if (glyphOption == 0) {
+    if (glyphOption == 0) { 
         gridX();
     } else if (glyphOption == 1) {
         gridX();
@@ -58,38 +63,15 @@ function draw() {
     } else if (glyphOption == 2){
         gridX();
         gridY();
-    }
-
-    // noFill();
-    // beginShape();
-    // stroke(bg);
-    // strokeWeight(5);
-    // for (i=0; i<count; i++){
-    //   vertex(x,y);
-    //   const r = floor(random(4));
-    //   switch (r) {
-    //     case 0:
-    //       x = x + 25;
-    //       break;
-    //     case 1:
-    //       x = x - 25;
-    //       break;
-    //     case 2:
-    //       y = y + 25;
-    //       break;
-    //     case 3:
-    //       y = y - 25;
-    //       break;
-    //   }
-    // }
-    // endShape(CLOSE);
-    // noLoop();
+    } // add glyph option 3 - random walk shapes
 
     // Erased Parts
     blendMode(BLEND);
     
     stroke(bg);
-    directionalHatch(0.5 + fxrand() * 5);
+    directionalHatch();
+    randomWalkerLinesMask(xRand, yRand, 5 + fxrand() * 25);
+    randomWalkerCircle(10, xRand, yRand, 5 + fxrand() * 25);
 
     // // add noise
     stroke(360, 100, 100, 100);
@@ -104,9 +86,6 @@ function draw() {
     shapeGradient();
     //blendMode(OVERLAY);
     ellipse(fxrand() * width, fxrand() * height, 300 + fxrand() * width);
-
-
-
 
 }
 
@@ -141,66 +120,191 @@ function glyphs() {
 
     } else if (n < 0.666 && n >= 0.333) {
         // draw straight random lines
-        let numLines = 20;
-        for (let i = 0; i < numLines; i++) {
-            strokeWeight(fxrand() * i / 2);
-            if (optionNum == 0) {
-                // gold bg
-                stroke(50, 10, 0, 50);
-            } else if (optionNum == 1) {
-                // black bg
-                stroke(360, 0, 100, 50);
-            } else if (optionNum == 2) {
-                // white bg
-                stroke(200, 0, 0, 50);
-            }
-            for (let i = 0; i <= numLines; i++) {
-                let x2 = fxrand() * width;
-                let y2 = fxrand() * height;
-                line(x1, y1, x2, y2);
-                x1 = x2;
-                y1 = y2;
-            }
-        }
+        lineGlyphs(5 + fxrand() * 25);
+        print("LINE GLPHYS");
         return glyphOption = 1;
     } else if( n < 0.333){
-
-        // make this a function
-        noFill();
-        beginShape();
-        strokeWeight(0.05 + fxrand()*5);
-        if (optionNum == 0) {
-            // gold bg
-            stroke(50, 10, 0, 50);
-        } else if (optionNum == 1) {
-            // black bg
-            stroke(360, 0, 100, 50);
-        } else if (optionNum == 2) {
-            // white bg
-            stroke(200, 0, 0, 50);
-        }
-        for (i=0; i<count; i++){
-          vertex(x,y);
-          const r = floor(random(4));
-          switch (r) {
-            case 0:
-              x = x + 10;
-              break;
-            case 1:
-              x = x - 10;
-              break;
-            case 2:
-              y = y + 10;
-              break;
-            case 3:
-              y = y - 10;
-              break;
-          }
-        }
-        endShape();
-        //noLoop();
+        randomWalkerLines(x,y,5 + fxrand() * 25);
+        // add probabilities for multiple random walkers 
+        randomWalkerLines(0,0,5 + fxrand() * 25);
+        randomWalkerLines(width,height,5 + fxrand() * 25);
+        randomWalkerLines(width,0,5 + fxrand() * 25);
         return glyphOption = 2;
     }
+}
+
+function lineGlyphs(n){
+    let m = fxrand();
+    for (let i = 0; i < n; i++) {
+        strokeWeight(fxrand() * i / 2);
+        if (optionNum == 0) {
+            // gold bg
+            stroke(50, 10, 0, 40 + fxrand() * 100);
+        } else if (optionNum == 1) {
+            // black bg
+            stroke(360, 0, 100, 40 + fxrand() * 100);
+        } else if (optionNum == 2) {
+            // white bg
+            stroke(200, 0, 0, 40 + fxrand() * 100);
+        }
+        if(m >= 0){ // fix probabilities 
+            randomLinesQ1(n);
+            randomLinesQ2(n);
+            randomLinesQ3(n);
+            randomLinesQ4(n);
+        }
+        // } else if (m <= 0) {
+
+        // }
+    }
+}
+
+function randomLinesQ1(n){
+    // Q1 Random Lines
+    let q1x = width / 2 + fxrand() * width;
+    let q1y = fxrand() * height / 2;
+    for (let i = 0; i <= n; i++) {
+        let q1x2 = width/2 + fxrand() * width;
+        let q1y2 = fxrand() * height / 2;
+        line(q1x, q1y, q1x2, q1y2);
+        q1x = q1x2;
+        q1y = q1y2;
+    }
+}
+
+function randomLinesQ2(n){
+    // Q2 Random Lines
+    let q2x = fxrand() * width / 2;
+    let q2y = fxrand() * height / 2;
+    for (let i = 0; i <= n; i++) {
+        let q2x2 = fxrand() * width / 2;
+        let q2y2 = fxrand() * height / 2;
+        line(q2x, q2y, q2x2, q2y2);
+        q2x = q2x2;
+        q2y = q2y2;
+    }
+}
+
+function randomLinesQ3(n){
+    // Q3 Random Lines
+    let q3x = fxrand() * width / 2;
+    let q3y = height / 2 + fxrand() * height;
+    for (let i = 0; i <= n; i++) {
+        let q3x2 = fxrand() * width / 2;
+        let q3y2 = height / 2 + fxrand() * height;
+        line(q3x, q3y, q3x2, q3y2);
+        q3x = q3x2;
+        q3y = q3y2;
+    }
+}
+
+function randomLinesQ4(n){
+    // Q4 Random Lines
+    let q4x = width / 2 + fxrand() * width;
+    let q4y = height / 2 + fxrand() * height;
+    for (let i = 0; i <= n; i++) {
+        let q4x2 = width / 2 + fxrand() * width;
+        let q4y2 = height / 2 + fxrand() * height;
+        line(q4x, q4y, q4x2, q4y2);
+        q4x = q4x2;
+        q4y = q4y2;
+    }
+}
+
+// original working random lines
+// for (let i = 0; i <= numLines; i++) {
+//     let x2 = fxrand() * width;
+//     let y2 = fxrand() * height;
+//     line(x1, y1, x2, y2);
+//     x1 = x2;
+//     y1 = y2;
+// }
+
+function randomWalkerLines(x0, y0, len) {
+    noFill();
+    beginShape();
+    strokeWeight(0.05 + fxrand() * 10);
+    if (optionNum == 0) {
+        // gold bg
+        stroke(50, 10, 0, 80);
+    } else if (optionNum == 1) {
+        // black bg
+        stroke(360, 0, 100, 80);
+    } else if (optionNum == 2) {
+        // white bg
+        stroke(200, 0, 0, 80);
+    }
+    for (i=0; i<count; i++){
+      vertex(x0, y0);
+      const r = floor(random(4));
+      switch (r) {
+        case 0:
+          x0 = x0 + len;
+          break;
+        case 1:
+          x0 = x0 - len;
+          break;
+        case 2:
+          y0 = y0 + len;
+          break;
+        case 3:
+          y0 = y0 - len;
+          break;
+      }
+    }
+    endShape();
+    //noLoop();
+}
+
+function randomWalkerLinesMask(x0, y0, len) {
+    noFill();
+    beginShape();
+    for (i=0; i<count; i++){
+      vertex(x0, y0);
+      const r = floor(random(4));
+      switch (r) {
+        case 0:
+          x0 = x0 + len;
+          break;
+        case 1:
+          x0 = x0 - len;
+          break;
+        case 2:
+          y0 = y0 + len;
+          break;
+        case 3:
+          y0 = y0 - len;
+          break;
+      }
+    }
+    endShape();
+    //noLoop();
+}
+
+function randomWalkerCircle(n, x0, y0, len) {
+    noFill();
+    beginShape();
+    strokeWeight(n);
+    for (i=0; i<count; i++){
+      point(x0, y0);
+      const r = floor(random(4));
+      switch (r) {
+        case 0:
+          x0 = x0 + len;
+          break;
+        case 1:
+          x0 = x0 - len;
+          break;
+        case 2:
+          y0 = y0 + len;
+          break;
+        case 3:
+          y0 = y0 - len;
+          break;
+      }
+    }
+    endShape();
+    //noLoop();
 }
 
 // Description: Creates a grid with Y Direction offset
@@ -237,48 +341,57 @@ function randomSizing() {
 }
 
 // Description: Sets probability of directional hatch
-function directionalHatch(sw) {
+function directionalHatch() {
     let n = fxrand();
     let padding = 5;
     let spacingMax = 500;
-    let spacingMin = 300;
-    strokeWeight(sw);
+    let spacingMin = 100;
+    let strokeWeightMin = 0.5;
+    let strokeWeightMax = 10;
     if (n <= 0.90) {
         for (let i = 0; i < height; i++) {
             line(0, 0, width + padding, i);
             i += spacingMin + fxrand() * spacingMax;
+            strokeWeight(strokeWeightMin + fxrand() * strokeWeightMax);
         }
         for (let i = 0; i < height; i++) {
             line(width, 0, -padding, i);
             i += spacingMin + fxrand() * spacingMax;
+            strokeWeight(strokeWeightMin + fxrand() * strokeWeightMax);
         }
         for (let i = 0; i < height; i++) {
             line(0, height, width + padding, i);
             i += spacingMin + fxrand() * spacingMax;
+            strokeWeight(strokeWeightMin + fxrand() * strokeWeightMax);
         }
         for (let i = 0; i < height; i++) {
             line(width, height, padding, i);
             i += spacingMin + fxrand() * spacingMax;
+            strokeWeight(strokeWeightMin + fxrand() * strokeWeightMax);
         }
     } else if (n >= 0.675 && n < 0.90) {
         for (let i = 0; i < height; i++) {
             line(0, 0, width + padding, i);
             i += spacingMin + fxrand() * spacingMax;
+            strokeWeight(strokeWeightMin + fxrand() * strokeWeightMax);
         }
     } else if (n >= 0.45 && n < 0.675) {
         for (let i = 0; i < height; i++) {
             line(width, 0, -padding, i);
             i += spacingMin + fxrand() * spacingMax;
+            strokeWeight(strokeWeightMin + fxrand() * strokeWeightMax);
         }
     } else if (n >= 22.5 && n < 0.45) {
         for (let i = 0; i < height; i++) {
             line(0, height, width + padding, i);
             i += spacingMin + fxrand() * spacingMax;
+            strokeWeight(strokeWeightMin + fxrand() * strokeWeightMax);
         }
     } else {
         for (let i = 0; i < height; i++) {
             line(width, height, padding, i);
             i += spacingMin + fxrand() * spacingMax;
+            strokeWeight(strokeWeightMin + fxrand() * strokeWeightMax);
         }
     }
 }
