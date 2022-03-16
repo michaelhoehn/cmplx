@@ -11,6 +11,7 @@
 // animate the render
 // rotate random walker 
 // random lines glyphs in 4 quadrants 
+// add random lines chance for the entire thing back in : see line 215ish
 // zoom over and click to save image
 // splash of color like red / blue / yellow / green square or polygon
 
@@ -29,7 +30,7 @@ let color1, color2, color3, color4, color5, color6, color7, color8, color9;
 let noiseRand = fxrand();
 let noiseCount = 50000 + fxrand() * 300000;
 let glyphOption;
-let count = 10000;
+let count = 100000;
 let x;
 let y;
 let xRand, yRand;
@@ -121,8 +122,8 @@ function glyphs() {
     } else if (n < 0.666 && n >= 0.333) {
         // draw straight random lines
         lineGlyphs(5 + fxrand() * 25);
-        print("LINE GLPHYS");
         return glyphOption = 1;
+
     } else if( n < 0.333){
         randomWalkerLines(x,y,5 + fxrand() * 25);
         // add probabilities for multiple random walkers 
@@ -239,13 +240,21 @@ function randomWalkerLines(x0, y0, len) {
       const r = floor(random(4));
       switch (r) {
         case 0:
-          x0 = x0 + len;
+          if(x0 > width || x0 < 0) {
+            x = width / 2;
+          } else {
+            x0 = x0 + len;
+          }
           break;
         case 1:
           x0 = x0 - len;
           break;
         case 2:
-          y0 = y0 + len;
+          if(y0 > height || y < 0){
+            y0 = height / 2; 
+          } else {
+            y0 = y0 + len;
+          }
           break;
         case 3:
           y0 = y0 - len;
