@@ -14,6 +14,7 @@
 // add random lines chance for the entire thing back in : see line 215ish
 // zoom over and click to save image
 // splash of color like red / blue / yellow / green square or polygon
+// alpha decrease per random walker to add depth of field 
 
 let n = fxrand();
 let lineCount = 20; //2 + Math.floor(fxrand()*20);
