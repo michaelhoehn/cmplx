@@ -1,16 +1,20 @@
 // Please review LICENSE.md for usage limitations
 
 // to do 
-// design review:
-// Remove all glyph options except for random walker
-// All other glyphs can stand alone, no need for this many options
-// Random walker edits:
-//  - single random walker
-//  - rotate by 45 or random angle
-//  - extrude and reduce alpha 
-//  - use masking regions in a more curated manner 
+// make masking lines all different sizes based on count
+// add random lines as an option instead of the squiggles
+// add random shapes instead of lines
+// add small marker sketch squiggles
+// add dot grids
+// make random walker a function to be called multiple times from different starting points
+// eraser lines to be different lineweights instead of a single lineweight
 // animate the render
-// add better noise and colors - last step
+// rotate random walker 
+// random lines glyphs in 4 quadrants 
+// add random lines chance for the entire thing back in : see line 215ish
+// zoom over and click to save image
+// splash of color like red / blue / yellow / green square or polygon
+// alpha decrease per random walker to add depth of field 
 
 let n = fxrand();
 let lineCount = 20; //2 + Math.floor(fxrand()*20);
@@ -53,25 +57,25 @@ function draw() {
 
     noFill();
     glyphs();
-    // // masking
-    // if (glyphOption == 0) { 
-    //     gridX();
-    // } else if (glyphOption == 1) {
-    //     gridX();
-    //     gridY();
-    // } else if (glyphOption == 2){
-    //     gridX();
-    //     gridY();
-    // } // add glyph option 3 - random walk shapes
+    // masking
+    if (glyphOption == 0) { 
+        gridX();
+    } else if (glyphOption == 1) {
+        gridX();
+        gridY();
+    } else if (glyphOption == 2){
+        gridX();
+        gridY();
+    } // add glyph option 3 - random walk shapes
 
     // Erased Parts
     blendMode(BLEND);
     
     stroke(bg);
     //directionalHatch();
-    //randomWalkerLinesMask(xRand, yRand, 5 + fxrand() * 25);
+    randomWalkerLinesMask(xRand, yRand, 5 + fxrand() * 25);
 
-    //randomWalkerCircle(10, xRand, yRand, 5 + fxrand() * 25);
+    randomWalkerCircle(10, xRand, yRand, 5 + fxrand() * 25);
 
     // // add noise
     stroke(360, 100, 100, 100);
@@ -92,16 +96,138 @@ function draw() {
 // <----------------------------------------------- Draw Functions ----------------------------------------------------> //
 
 function glyphs() {
+    let n = fxrand();
+    if (n >= 0.666) {
+        // draw squiggles
+        for (let i = 1; i < rowCount; i++) {
+            for (let t = 0; t < lineCount; t++) {
+                strokeWeight(0.15 * (t + 1));
+                if (optionNum == 0) {
+                    // gold bg
+                    stroke(50, 10, 0, 2 * (t + 20));
+                } else if (optionNum == 1) {
+                    // black bg
+                    stroke(360, 0, 100, 2 * (t + 20));
+                } else if (optionNum == 2) {
+                    // white bg
+                    stroke(200, 0, 0, 2 * (t + 20));
+                }
+                beginShape();
+                for (let j = 0; j <= resolution; j++) {
+                    curveVertex((j * width / resolution), ((i * height / rowCount) + fxrand() * amplitude) - amplitude / 2);
+                    noLoop();
+                }
+                endShape();
+            }
+        }
+        return glyphOption = 0;
 
-    randomWalkerLines(x,y,50 + fxrand() * 250);
-    return glyphOption = 0;
+    } else if (n < 0.666 && n >= 0.333) {
+        // draw straight random lines
+        lineGlyphs(5 + fxrand() * 25);
+        return glyphOption = 1;
+
+    } else if( n < 0.333){
+        randomWalkerLines(x,y,5 + fxrand() * 25);
+        // add probabilities for multiple random walkers 
+        randomWalkerLines(0,0,5 + fxrand() * 25);
+        randomWalkerLines(width,height,5 + fxrand() * 25);
+        randomWalkerLines(width,0,5 + fxrand() * 25);
+        return glyphOption = 2;
+    }
 }
+
+function lineGlyphs(n){
+    let m = fxrand();
+    for (let i = 0; i < n; i++) {
+        strokeWeight(fxrand() * i / 2);
+        if (optionNum == 0) {
+            // gold bg
+            stroke(50, 10, 0, 40 + fxrand() * 100);
+        } else if (optionNum == 1) {
+            // black bg
+            stroke(360, 0, 100, 40 + fxrand() * 100);
+        } else if (optionNum == 2) {
+            // white bg
+            stroke(200, 0, 0, 40 + fxrand() * 100);
+        }
+        if(m >= 0){ // fix probabilities 
+            randomLinesQ1(n);
+            randomLinesQ2(n);
+            randomLinesQ3(n);
+            randomLinesQ4(n);
+        }
+        // } else if (m <= 0) {
+
+        // }
+    }
+}
+
+function randomLinesQ1(n){
+    // Q1 Random Lines
+    let q1x = width / 2 + fxrand() * width;
+    let q1y = fxrand() * height / 2;
+    for (let i = 0; i <= n; i++) {
+        let q1x2 = width/2 + fxrand() * width;
+        let q1y2 = fxrand() * height / 2;
+        line(q1x, q1y, q1x2, q1y2);
+        q1x = q1x2;
+        q1y = q1y2;
+    }
+}
+
+function randomLinesQ2(n){
+    // Q2 Random Lines
+    let q2x = fxrand() * width / 2;
+    let q2y = fxrand() * height / 2;
+    for (let i = 0; i <= n; i++) {
+        let q2x2 = fxrand() * width / 2;
+        let q2y2 = fxrand() * height / 2;
+        line(q2x, q2y, q2x2, q2y2);
+        q2x = q2x2;
+        q2y = q2y2;
+    }
+}
+
+function randomLinesQ3(n){
+    // Q3 Random Lines
+    let q3x = fxrand() * width / 2;
+    let q3y = height / 2 + fxrand() * height;
+    for (let i = 0; i <= n; i++) {
+        let q3x2 = fxrand() * width / 2;
+        let q3y2 = height / 2 + fxrand() * height;
+        line(q3x, q3y, q3x2, q3y2);
+        q3x = q3x2;
+        q3y = q3y2;
+    }
+}
+
+function randomLinesQ4(n){
+    // Q4 Random Lines
+    let q4x = width / 2 + fxrand() * width;
+    let q4y = height / 2 + fxrand() * height;
+    for (let i = 0; i <= n; i++) {
+        let q4x2 = width / 2 + fxrand() * width;
+        let q4y2 = height / 2 + fxrand() * height;
+        line(q4x, q4y, q4x2, q4y2);
+        q4x = q4x2;
+        q4y = q4y2;
+    }
+}
+
+// original working random lines
+// for (let i = 0; i <= numLines; i++) {
+//     let x2 = fxrand() * width;
+//     let y2 = fxrand() * height;
+//     line(x1, y1, x2, y2);
+//     x1 = x2;
+//     y1 = y2;
+// }
 
 function randomWalkerLines(x0, y0, len) {
     noFill();
     beginShape();
-    strokeWeight(10);
-    strokeJoin(MITER);
+    strokeWeight(0.05 + fxrand() * 10);
     if (optionNum == 0) {
         // gold bg
         stroke(50, 10, 0, 80);
@@ -383,20 +509,22 @@ function setBackgroundColor(n) {
     let saturation = 10;
     let brightness = 100;
     let maxAlpha = 100;
-    if (n >= 0.99) {
+    if (n >= 0.9) {
         // Special Gold Background
         bg = color(hue, saturation, brightness, maxAlpha);
         return optionNum = 0;
-    } else if (n < 0.99 && n >= 0.01) {
+    } else if (n < 0.9 && n >= 0.45) {
         // 50/50 for Black BG
         bg = color(0);
         return optionNum = 1;
-    } else if (n < 0.01 && n >= 0) {
+    } else if (n < 0.45 && n >= 0) {
         // 50/50 for White BG
         bg = color(0, 2, 100, 100);
         return optionNum = 2;
     }
 }
+
+
 
 // <----- Object Classes below this section ----->
 class Lines {
