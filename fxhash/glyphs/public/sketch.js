@@ -2,6 +2,11 @@
 
 // to do 
 // design review:
+// move new if statements into a function to tidy up draw
+// draw random walker on graphics with rotation 
+// draw random walker extrusion with alpha decreasing with each iteration
+// draw "section" line on original walker path to imply thickness 
+// experiement with shearing the noise and strokes found in the openProcessing library
 // Remove all glyph options except for random walker
 // All other glyphs can stand alone, no need for this many options
 // Random walker edits:
@@ -31,28 +36,98 @@ let count = 100000;
 let x;
 let y;
 let xRand, yRand;
+let paddingFrame = 300;
+let columnNum;
+let rowHeight0, rowHeight1, rowHeight2, rowHeight3, rowHeight4
+let graphics;
 
 function setup() {
     createCanvas(2500, 2500);
     //createCanvas(innerWidth, innerHeight);
     colorMode(HSB, 360, 100, 100, 100);
     rectMode(CENTER);
+    angleMode(DEGREES);
+    graphics = createGraphics(width, height);
 
     // color background function
     setBackgroundColor(n);
     background(bg);
     x1 = fxrand() * width;
     y1 = fxrand() * height;
-    x = width/2;
-    y = height/2;
+    x = width / 2;
+    y = height / 2;
     xRand = fxrand() * width;
     yRand = fxrand() * height;
+    // columnNum = 4;
+    columnNum = Math.floor(2 + fxrand() * 3);
+    rowHeight0 = fxrand() * height;
+    rowHeight1 = fxrand() * height;
+    rowHeight2 = fxrand() * height;
+    rowHeight3 = fxrand() * height;
 }
 
 function draw() {
 
+    //ellipse(width / 2, height / 2, 5000);
     noFill();
     glyphs();
+    stroke(bg);
+    strokeWeight(paddingFrame * 0.5);
+    rect(width / 2, height / 2, width, height);
+
+    for (let i = 0; i <= columnNum; i++) {
+        let lineX = (i * width) / columnNum;
+        stroke(bg);
+        strokeWeight(paddingFrame * 0.25);
+        line(lineX, 0, lineX, height);
+    }
+
+    if (columnNum == 2) {
+        strokeCap(SQUARE);
+        stroke(bg);
+        strokeWeight(paddingFrame * 0.25);
+        // line 1
+        line(0, rowHeight0, width / 2, rowHeight0);
+
+        // line 2
+        line(width / 2, rowHeight1, width, rowHeight1);
+    }
+
+    if (columnNum == 3) {
+        strokeCap(SQUARE);
+        stroke(bg);
+        strokeWeight(paddingFrame * 0.25);
+        // line 1
+        line(0, rowHeight0, width / 3, rowHeight0);
+
+        // line 2
+        line(width * 0.33, rowHeight1, width * 0.66, rowHeight1);
+
+        // line 3
+        line(width * 0.66, rowHeight2, width, rowHeight2);
+    }
+
+    if (columnNum == 4) {
+        strokeCap(SQUARE);
+        stroke(bg);
+        strokeWeight(paddingFrame * 0.25);
+        // line 1
+        line(0, rowHeight0, width / 4, rowHeight0);
+
+        // line 2
+        line(width * 0.25, rowHeight1, width * 0.5, rowHeight1);
+
+        // line 3
+        line(width * 0.5, rowHeight2, width * 0.75, rowHeight2);
+
+        // line 3
+        line(width * 0.75, rowHeight3, width, rowHeight3);
+    }
+
+    noLoop();
+
+    //noFill();
+    //glyphs();
     // // masking
     // if (glyphOption == 0) { 
     //     gridX();
@@ -65,27 +140,27 @@ function draw() {
     // } // add glyph option 3 - random walk shapes
 
     // Erased Parts
-    blendMode(BLEND);
-    
-    stroke(bg);
+    //blendMode(BLEND);
+
+    //stroke(bg);
     //directionalHatch();
     //randomWalkerLinesMask(xRand, yRand, 5 + fxrand() * 25);
 
     //randomWalkerCircle(10, xRand, yRand, 5 + fxrand() * 25);
 
     // // add noise
-    stroke(360, 100, 100, 100);
-    noisey(noiseCount, 0.05 + fxrand() * 1, noiseRand);
+    //stroke(360, 100, 100, 100);
+    //noisey(noiseCount, 0.05 + fxrand() * 1, noiseRand);
 
     // //blend shapes 
-    blendMode(SOFT_LIGHT);
-    fill(bg);
-    shapeGradient();
-    noStroke();
-    rect(fxrand() * width, fxrand() * height, 100 + fxrand() * width, 100 + fxrand() * height);
-    shapeGradient();
+    // blendMode(SOFT_LIGHT);
+    // fill(bg);
+    // shapeGradient();
+    // noStroke();
+    // rect(fxrand() * width, fxrand() * height, 100 + fxrand() * width, 100 + fxrand() * height);
+    // shapeGradient();
     //blendMode(OVERLAY);
-    ellipse(fxrand() * width, fxrand() * height, 300 + fxrand() * width);
+    //ellipse(fxrand() * width, fxrand() * height, 300 + fxrand() * width);
 
 }
 
@@ -93,7 +168,7 @@ function draw() {
 
 function glyphs() {
 
-    randomWalkerLines(x,y,50 + fxrand() * 250);
+    randomWalkerLines(x, y, 50 + fxrand() * 250);
     return glyphOption = 0;
 }
 
@@ -112,31 +187,31 @@ function randomWalkerLines(x0, y0, len) {
         // white bg
         stroke(200, 0, 0, 80);
     }
-    for (i=0; i<count; i++){
-      vertex(x0, y0);
-      const r = floor(random(4));
-      switch (r) {
-        case 0:
-          if(x0 > width || x0 < 0) {
-            x = width / 2;
-          } else {
-            x0 = x0 + len;
-          }
-          break;
-        case 1:
-          x0 = x0 - len;
-          break;
-        case 2:
-          if(y0 > height || y < 0){
-            y0 = height / 2; 
-          } else {
-            y0 = y0 + len;
-          }
-          break;
-        case 3:
-          y0 = y0 - len;
-          break;
-      }
+    for (i = 0; i < count; i++) {
+        vertex(x0, y0);
+        const r = floor(random(4));
+        switch (r) {
+            case 0:
+                if (x0 > width || x0 < 0) {
+                    x = width / 2;
+                } else {
+                    x0 = x0 + len;
+                }
+                break;
+            case 1:
+                x0 = x0 - len;
+                break;
+            case 2:
+                if (y0 > height || y < 0) {
+                    y0 = height / 2;
+                } else {
+                    y0 = y0 + len;
+                }
+                break;
+            case 3:
+                y0 = y0 - len;
+                break;
+        }
     }
     endShape();
     //noLoop();
@@ -145,23 +220,23 @@ function randomWalkerLines(x0, y0, len) {
 function randomWalkerLinesMask(x0, y0, len) {
     noFill();
     beginShape();
-    for (i=0; i<count; i++){
-      vertex(x0, y0);
-      const r = floor(random(4));
-      switch (r) {
-        case 0:
-          x0 = x0 + len;
-          break;
-        case 1:
-          x0 = x0 - len;
-          break;
-        case 2:
-          y0 = y0 + len;
-          break;
-        case 3:
-          y0 = y0 - len;
-          break;
-      }
+    for (i = 0; i < count; i++) {
+        vertex(x0, y0);
+        const r = floor(random(4));
+        switch (r) {
+            case 0:
+                x0 = x0 + len;
+                break;
+            case 1:
+                x0 = x0 - len;
+                break;
+            case 2:
+                y0 = y0 + len;
+                break;
+            case 3:
+                y0 = y0 - len;
+                break;
+        }
     }
     endShape();
     //noLoop();
@@ -171,23 +246,23 @@ function randomWalkerCircle(n, x0, y0, len) {
     noFill();
     beginShape();
     strokeWeight(n);
-    for (i=0; i<count; i++){
-      point(x0, y0);
-      const r = floor(random(4));
-      switch (r) {
-        case 0:
-          x0 = x0 + len;
-          break;
-        case 1:
-          x0 = x0 - len;
-          break;
-        case 2:
-          y0 = y0 + len;
-          break;
-        case 3:
-          y0 = y0 - len;
-          break;
-      }
+    for (i = 0; i < count; i++) {
+        point(x0, y0);
+        const r = floor(random(4));
+        switch (r) {
+            case 0:
+                x0 = x0 + len;
+                break;
+            case 1:
+                x0 = x0 - len;
+                break;
+            case 2:
+                y0 = y0 + len;
+                break;
+            case 3:
+                y0 = y0 - len;
+                break;
+        }
     }
     endShape();
     //noLoop();
