@@ -10,10 +10,7 @@
 // Remove all glyph options except for random walker
 // All other glyphs can stand alone, no need for this many options
 // Random walker edits:
-//  - single random walker
-//  - rotate by 45 or random angle
 //  - extrude and reduce alpha 
-//  - use masking regions in a more curated manner 
 // animate the render
 // add better noise and colors - last step
 
@@ -32,32 +29,36 @@ let color1, color2, color3, color4, color5, color6, color7, color8, color9;
 let noiseRand = fxrand();
 let noiseCount = 50000 + fxrand() * 300000;
 let glyphOption;
-let count = 100000;
+let count = 100000; // <--- reduce this for quicker renderings
 let x;
 let y;
 let xRand, yRand;
 let paddingFrame = 300;
 let columnNum;
 let rowHeight0, rowHeight1, rowHeight2, rowHeight3, rowHeight4
-let graphics;
+let graphicsLayer;
+let spacingX = 5;
+let spacingY = 5;
+let glphyStrokeWidth = 10;
 
-function setup() {
-    createCanvas(2500, 2500);
+function setup() { 
     //createCanvas(innerWidth, innerHeight);
+    createCanvas(2500, 2500);
+    graphicsLayer = createGraphics(width*2, height*2);
     colorMode(HSB, 360, 100, 100, 100);
     rectMode(CENTER);
     angleMode(DEGREES);
-    graphics = createGraphics(width, height);
+    imageMode(CENTER);
 
     // color background function
     setBackgroundColor(n);
     background(bg);
-    x1 = fxrand() * width;
-    y1 = fxrand() * height;
-    x = width / 2;
-    y = height / 2;
-    xRand = fxrand() * width;
-    yRand = fxrand() * height;
+    x1 = fxrand() * graphicsLayer.width;
+    y1 = fxrand() * graphicsLayer.height;
+    x = graphicsLayer.width / 2;
+    y = graphicsLayer.height / 2;
+    xRand = fxrand() * graphicsLayer.width;
+    yRand = fxrand() * graphicsLayer.height;
     // columnNum = 4;
     columnNum = Math.floor(2 + fxrand() * 3);
     rowHeight0 = fxrand() * height;
@@ -68,9 +69,25 @@ function setup() {
 
 function draw() {
 
-    //ellipse(width / 2, height / 2, 5000);
-    noFill();
+    graphicsLayer.rectMode(CENTER);
+    graphicsLayer.strokeWeight(glphyStrokeWidth);
+    graphicsLayer.stroke(255);
+    graphicsLayer.noFill();
+    
     glyphs();
+
+    push();
+    translate(width/2, height/2);
+    rotate(45);
+    for(let i = 0; i < 50; i++){
+        //tint(255, 150 - (i*5)); // <---- TINT IS SUPER SLOW
+        image(graphicsLayer, 5 * i, 5 * i);
+    }
+    pop();
+
+
+
+    noFill();
     stroke(bg);
     strokeWeight(paddingFrame * 0.5);
     rect(width / 2, height / 2, width, height);
@@ -126,41 +143,28 @@ function draw() {
 
     noLoop();
 
-    //noFill();
-    //glyphs();
-    // // masking
-    // if (glyphOption == 0) { 
-    //     gridX();
-    // } else if (glyphOption == 1) {
-    //     gridX();
-    //     gridY();
-    // } else if (glyphOption == 2){
-    //     gridX();
-    //     gridY();
-    // } // add glyph option 3 - random walk shapes
-
     // Erased Parts
-    //blendMode(BLEND);
+    blendMode(BLEND);
 
-    //stroke(bg);
+    stroke(bg);
     //directionalHatch();
     //randomWalkerLinesMask(xRand, yRand, 5 + fxrand() * 25);
 
-    //randomWalkerCircle(10, xRand, yRand, 5 + fxrand() * 25);
+    randomWalkerCircle(10, xRand, yRand, 5 + fxrand() * 25);
 
-    // // add noise
-    //stroke(360, 100, 100, 100);
-    //noisey(noiseCount, 0.05 + fxrand() * 1, noiseRand);
+    // add noise
+    stroke(360, 100, 100, 100);
+    noisey(noiseCount, 0.05 + fxrand() * 1, noiseRand);
 
-    // //blend shapes 
-    // blendMode(SOFT_LIGHT);
-    // fill(bg);
-    // shapeGradient();
-    // noStroke();
-    // rect(fxrand() * width, fxrand() * height, 100 + fxrand() * width, 100 + fxrand() * height);
-    // shapeGradient();
-    //blendMode(OVERLAY);
-    //ellipse(fxrand() * width, fxrand() * height, 300 + fxrand() * width);
+    //blend shapes 
+    blendMode(SOFT_LIGHT);
+    fill(bg);
+    shapeGradient();
+    noStroke();
+    rect(fxrand() * width, fxrand() * height, 100 + fxrand() * width, 100 + fxrand() * height);
+    shapeGradient();
+    blendMode(OVERLAY);
+    ellipse(fxrand() * width, fxrand() * height, 300 + fxrand() * width);
 
 }
 
@@ -168,15 +172,14 @@ function draw() {
 
 function glyphs() {
 
-    randomWalkerLines(x, y, 50 + fxrand() * 250);
+    randomWalkerLines(x, y, 10 + fxrand() * 200);
     return glyphOption = 0;
 }
 
 function randomWalkerLines(x0, y0, len) {
     noFill();
-    beginShape();
-    strokeWeight(10);
-    strokeJoin(MITER);
+    graphicsLayer.beginShape();
+    graphicsLayer.strokeJoin(MITER);
     if (optionNum == 0) {
         // gold bg
         stroke(50, 10, 0, 80);
@@ -188,12 +191,12 @@ function randomWalkerLines(x0, y0, len) {
         stroke(200, 0, 0, 80);
     }
     for (i = 0; i < count; i++) {
-        vertex(x0, y0);
+        graphicsLayer.vertex(x0, y0);
         const r = floor(random(4));
         switch (r) {
             case 0:
-                if (x0 > width || x0 < 0) {
-                    x = width / 2;
+                if (x0 > graphicsLayer.width || x0 < 0) {
+                    x = graphicsLayer.width / 2;
                 } else {
                     x0 = x0 + len;
                 }
@@ -202,8 +205,8 @@ function randomWalkerLines(x0, y0, len) {
                 x0 = x0 - len;
                 break;
             case 2:
-                if (y0 > height || y < 0) {
-                    y0 = height / 2;
+                if (y0 > graphicsLayer.height || y < 0) {
+                    y0 = graphicsLayer.height / 2;
                 } else {
                     y0 = y0 + len;
                 }
@@ -213,8 +216,7 @@ function randomWalkerLines(x0, y0, len) {
                 break;
         }
     }
-    endShape();
-    //noLoop();
+    graphicsLayer.endShape();
 }
 
 function randomWalkerLinesMask(x0, y0, len) {
