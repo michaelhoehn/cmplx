@@ -13,6 +13,13 @@
 //  - extrude and reduce alpha 
 // animate the render
 // add better noise and colors - last step
+// directional hatch needs to be strictly at 45 degrees and can change spacing
+// masking circles need more control and / or variance
+// controls for CurveVertex v Vertex
+// project colors are undecided
+// needs a couple colour pallets
+// shear noise and vary sizes
+// colour masks can be bigger 
 
 let n = fxrand();
 let lineCount = 20; //2 + Math.floor(fxrand()*20);
@@ -80,8 +87,8 @@ function draw() {
     translate(width/2, height/2);
     rotate(45);
     for(let i = 0; i < 50; i++){
-        //tint(255, 150 - (i*5)); // <---- TINT IS SUPER SLOW
-        image(graphicsLayer, 5 * i, 5 * i);
+        tint(255, 100 - (i*6)); // <---- TINT IS SUPER SLOW
+        image(graphicsLayer, 10 * i, 10 * i);
     }
     pop();
 
@@ -191,7 +198,7 @@ function randomWalkerLines(x0, y0, len) {
         stroke(200, 0, 0, 80);
     }
     for (i = 0; i < count; i++) {
-        graphicsLayer.vertex(x0, y0);
+        graphicsLayer.curveVertex(x0, y0);
         const r = floor(random(4));
         switch (r) {
             case 0:
