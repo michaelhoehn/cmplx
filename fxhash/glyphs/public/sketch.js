@@ -90,7 +90,10 @@ function draw() {
     graphicsLayer.rectMode(CENTER);
     graphicsLayer.noFill();
     //graphicsLayer.fill(0);
-    glyphs(xRand, yRand, randomWalkSpacing, randomWalkCount, 1);
+    glyphs(xRand, yRand, randomWalkSpacing, randomWalkCount, 0.5 + fxrand() * 5, 100);
+
+    // now can add a for loop where you add to xRand, yRand instead of using tint 
+
     print(strokeOption);
     push();
     translate(width/2, height/2);
@@ -225,12 +228,12 @@ function setBackgroundColor(n) {
 }
 
 // Description: main graphical function calling random walker algorithm 
-function glyphs(x, y, randomWalkSpacing, randomWalkCount, sw) {
+function glyphs(x, y, randomWalkSpacing, randomWalkCount, sw, alpha) {
     graphicsLayer.strokeWeight(sw);
-    randomWalkerLines(x, y, randomWalkSpacing, randomWalkCount);
+    randomWalkerLines(x, y, randomWalkSpacing, randomWalkCount, alpha);
 }
 
-function randomWalkerLines(x0, y0, randomWalkSpacing, randomWalkCount) {
+function randomWalkerLines(x0, y0, randomWalkSpacing, randomWalkCount, alpha) {
 
     graphicsLayer.beginShape();
     graphicsLayer.strokeJoin(MITER);
@@ -249,27 +252,27 @@ function randomWalkerLines(x0, y0, randomWalkSpacing, randomWalkCount) {
             }
             break;
         case 1: 
-            graphicsLayer.stroke(0);
+            graphicsLayer.stroke(360, 0, 0, alpha);
             strokeOption = "White BG + Black Stroke"
             break;
         case 2: 
-            graphicsLayer.stroke(255);
+            graphicsLayer.stroke(200, 100, 100, alpha);
             strokeOption = "Black BG + White Stroke"
             break;
         case 3:
-            graphicsLayer.stroke(0);
+            graphicsLayer.stroke(360, 0, 0, alpha);
             strokeOption = "Brown BG + Black Stroke"
             break;
         case 4: 
-            graphicsLayer.stroke(0);
+            graphicsLayer.stroke(360, 0, 0, alpha);
             strokeOption = "Yellow BG + Black Stroke"
             break;
         case 5: 
-            graphicsLayer.stroke(0);
+            graphicsLayer.stroke(360, 20, 50, alpha);
             strokeOption = "Red BG + Black Stroke"
             break;
         case 6:
-            graphicsLayer.stroke(200, 20, 50, 100);
+            graphicsLayer.stroke(200, 20, 50, alpha);
             strokeOption = "Blue BG + Dark blue stroke"
             // add red option
             break;
