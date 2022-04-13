@@ -20,6 +20,8 @@
 // needs a couple colour pallets
 // shear noise and vary sizes
 // colour masks can be bigger 
+// line streaks like the image you found > using different color blending mode
+// restructure glyphs to host a fxrand hash, strokeweight and stroke (alpha is most important) then put glyphs in a for loop driven by another rand
 
 let n = fxrand();
 let lineCount = 20; //2 + Math.floor(fxrand()*20);
@@ -46,7 +48,9 @@ let rowHeight0, rowHeight1, rowHeight2, rowHeight3, rowHeight4
 let graphicsLayer;
 let spacingX = 5;
 let spacingY = 5;
-let glphyStrokeWidth = 10;
+let glphyStrokeWidth;
+let spacing;
+let glyphCount;
 
 function setup() { 
     //createCanvas(innerWidth, innerHeight);
@@ -75,24 +79,25 @@ function setup() {
 }
 
 function draw() {
+    glphyStrokeWidth = 1;
 
     graphicsLayer.rectMode(CENTER);
     graphicsLayer.strokeWeight(glphyStrokeWidth);
-    graphicsLayer.stroke(255);
-    graphicsLayer.noFill();
-    
+    graphicsLayer.fill(0);
     glyphs();
-
+    graphicsLayer.fill(255);
+    glyphs();
     push();
     translate(width/2, height/2);
     rotate(45);
-    for(let i = 0; i < 50; i++){
-        tint(255, 100 - (i*6)); // <---- TINT IS SUPER SLOW
-        image(graphicsLayer, 10 * i, 10 * i);
+
+    spacing = Math.floor(5 + fxrand() * 30); 
+    glyphCount = Math.floor(3 + fxrand() * 20);
+    for(let i = 0; i < glyphCount; i++){
+        //tint(255, 100 - (i*10)); // <---- TINT IS SUPER SLOW
+        image(graphicsLayer, spacing * i, spacing * i); 
     }
     pop();
-
-
 
     noFill();
     stroke(bg);
@@ -156,9 +161,9 @@ function draw() {
     stroke(bg);
     //directionalHatch();
     //randomWalkerLinesMask(xRand, yRand, 5 + fxrand() * 25);
-
-    randomWalkerCircle(10, xRand, yRand, 5 + fxrand() * 25);
-
+    fill(360,100,100,100);
+    //randomWalkerCircle(10, xRand, yRand, 5 + fxrand() * 25);
+    randomWalkerRect(10, xRand, yRand, 5 + fxrand() * 25);
     // add noise
     stroke(360, 100, 100, 100);
     noisey(noiseCount, 0.05 + fxrand() * 1, noiseRand);
@@ -168,18 +173,41 @@ function draw() {
     fill(bg);
     shapeGradient();
     noStroke();
-    rect(fxrand() * width, fxrand() * height, 100 + fxrand() * width, 100 + fxrand() * height);
+    rect(width/2, height/2, width, height);
+    //rect(fxrand() * width, fxrand() * height, 100 + fxrand() * width, 100 + fxrand() * height);
     shapeGradient();
     blendMode(OVERLAY);
-    ellipse(fxrand() * width, fxrand() * height, 300 + fxrand() * width);
+    //ellipse(fxrand() * width, fxrand() * height, 300 + fxrand() * width);
 
 }
 
 // <----------------------------------------------- Draw Functions ----------------------------------------------------> //
 
+// Description: Sets the color for BG
+function setBackgroundColor(n) {
+    // special rare bg
+    let hue = 50;
+    let saturation = 10;
+    let brightness = 100;
+    let maxAlpha = 100;
+    if (n >= 0.99) {
+        // Special Gold Background
+        bg = color(hue, saturation, brightness, maxAlpha);
+        return optionNum = 0;
+    } else if (n < 0.99 && n >= 0.01) {
+        // 50/50 for Black BG
+        bg = color(255);
+        return optionNum = 1;
+    } else if (n < 0.01 && n >= 0) {
+        // 50/50 for White BG
+        bg = color(0, 2, 100, 100);
+        return optionNum = 2;
+    }
+}
+
 function glyphs() {
 
-    randomWalkerLines(x, y, 10 + fxrand() * 200);
+    randomWalkerLines(x, y, 5 + fxrand() * 20);
     return glyphOption = 0;
 }
 
@@ -187,12 +215,13 @@ function randomWalkerLines(x0, y0, len) {
     noFill();
     graphicsLayer.beginShape();
     graphicsLayer.strokeJoin(MITER);
+    console.log(optionNum);
     if (optionNum == 0) {
         // gold bg
-        stroke(50, 10, 0, 80);
+        graphicsLayer.stroke(50, 10, 0, 80);
     } else if (optionNum == 1) {
         // black bg
-        stroke(360, 0, 100, 80);
+        graphicsLayer.stroke(0);
     } else if (optionNum == 2) {
         // white bg
         stroke(200, 0, 0, 80);
@@ -274,6 +303,32 @@ function randomWalkerCircle(n, x0, y0, len) {
         }
     }
     endShape();
+    //noLoop();
+}
+
+function randomWalkerRect(x0, y0, len) {
+    let rectPts = [];
+    for (i = 0; i < count; i++) {
+        vertex(x0, y0);
+        const r = floor(random(4));
+        switch (r) {
+            case 0:
+                x0 = x0 + len;
+                break;
+            case 1:
+                x0 = x0 - len;
+                break;
+            case 2:
+                y0 = y0 + len;
+                break;
+            case 3:
+                y0 = y0 - len;
+                break;
+        }
+        rectPts.push(x0, y0)
+    }
+    strokeWeight(5);
+    rect(rectPts.x0, rectPts.y0, 100, 100);
     //noLoop();
 }
 
@@ -458,28 +513,6 @@ function shapeGradient() {
     gradient.addColorStop(1, color2);
 
     drawingContext.fillStyle = gradient;
-}
-
-// Description: Sets the color for BG
-function setBackgroundColor(n) {
-    // special rare bg
-    let hue = 50;
-    let saturation = 10;
-    let brightness = 100;
-    let maxAlpha = 100;
-    if (n >= 0.99) {
-        // Special Gold Background
-        bg = color(hue, saturation, brightness, maxAlpha);
-        return optionNum = 0;
-    } else if (n < 0.99 && n >= 0.01) {
-        // 50/50 for Black BG
-        bg = color(0);
-        return optionNum = 1;
-    } else if (n < 0.01 && n >= 0) {
-        // 50/50 for White BG
-        bg = color(0, 2, 100, 100);
-        return optionNum = 2;
-    }
 }
 
 // <----- Object Classes below this section ----->

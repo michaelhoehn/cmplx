@@ -1,7 +1,7 @@
 body {
     background-color: rgb(255, 255, 255);
     /* leave it to hide the scrollbars */
-    overflow: hidden;
+    /*overflow: hidden; */
     justify-content: center;
     align-items: center;
     display: flex;
