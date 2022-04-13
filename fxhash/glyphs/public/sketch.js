@@ -88,10 +88,9 @@ function setup() {
 function draw() {
 
     graphicsLayer.rectMode(CENTER);
-    graphicsLayer.strokeWeight(10);
     graphicsLayer.noFill();
     //graphicsLayer.fill(0);
-    glyphs(xRand, yRand, randomWalkSpacing, randomWalkCount);
+    glyphs(xRand, yRand, randomWalkSpacing, randomWalkCount, 1);
     print(strokeOption);
     push();
     translate(width/2, height/2);
@@ -226,7 +225,8 @@ function setBackgroundColor(n) {
 }
 
 // Description: main graphical function calling random walker algorithm 
-function glyphs(x, y, randomWalkSpacing, randomWalkCount) {
+function glyphs(x, y, randomWalkSpacing, randomWalkCount, sw) {
+    graphicsLayer.strokeWeight(sw);
     randomWalkerLines(x, y, randomWalkSpacing, randomWalkCount);
 }
 
