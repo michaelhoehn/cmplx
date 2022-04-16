@@ -1,27 +1,18 @@
 // Please review LICENSE.md for usage limitations
 
-// to do 
-// design review:
-// move new if statements into a function to tidy up draw
-// draw random walker on graphics with rotation 
-// draw random walker extrusion with alpha decreasing with each iteration
+// to do
 // draw "section" line on original walker path to imply thickness 
 // experiement with shearing the noise and strokes found in the openProcessing library
 // Remove all glyph options except for random walker
 // All other glyphs can stand alone, no need for this many options
-// Random walker edits:
-//  - extrude and reduce alpha 
 // animate the render
 // add better noise and colors - last step
 // directional hatch needs to be strictly at 45 degrees and can change spacing
 // masking circles need more control and / or variance
-// controls for CurveVertex v Vertex
 // project colors are undecided
-// needs a couple colour pallets
 // shear noise and vary sizes
 // colour masks can be bigger 
 // line streaks like the image you found > using different color blending mode
-// restructure glyphs to host a fxrand hash, strokeweight and stroke (alpha is most important) then put glyphs in a for loop driven by another rand
 
 let n = fxrand();
 let lineCount = 20; //2 + Math.floor(fxrand()*20);
@@ -43,15 +34,17 @@ let randomWalkSpacing;
 let x;
 let y;
 let xRand, yRand;
-let paddingFrame = 300;
+let paddingFrame;
 let columnNum;
 let rowHeight0, rowHeight1, rowHeight2, rowHeight3, rowHeight4
 let graphicsLayer;
 let spacingX = 5;
 let spacingY = 5;
 let spacing;
-let glyphCount; 
+let glyphArrayCount; 
 let bgColorList = ["Gold", "White", "Black", "Brown", "Yellow", "Red", "Blue"];
+let glyphKey; 
+let glyphStrokeWeight;
 
 function setup() { 
     //createCanvas(innerWidth, innerHeight);
@@ -75,92 +68,67 @@ function setup() {
     y = graphicsLayer.height / 2;
     xRand = fxrand() * graphicsLayer.width;
     yRand = fxrand() * graphicsLayer.height;
-    // columnNum = 4;
-    columnNum = Math.floor(2 + fxrand() * 3);
+    columnNum = Math.floor(1 + fxrand() * 4);
     rowHeight0 = fxrand() * height;
     rowHeight1 = fxrand() * height;
     rowHeight2 = fxrand() * height;
     rowHeight3 = fxrand() * height;
-    randomWalkCount = 1000 + fxrand() * 100000; 
-    randomWalkSpacing = 5 + fxrand() * 20;
+    glyphKey = Math.floor(fxrand() * 3); // controls the glyph call
+    paddingFrame = 100 + fxrand() * 400;
 }
 
 function draw() {
 
     graphicsLayer.rectMode(CENTER);
-    graphicsLayer.noFill();
-    //graphicsLayer.fill(0);
-    glyphs(xRand, yRand, randomWalkSpacing, randomWalkCount, 0.5 + fxrand() * 5, 100);
 
-    // now can add a for loop where you add to xRand, yRand instead of using tint 
+    // let fillProbability = fxrand();
+    // if(fillProbability >= 0.5){
+    //     graphicsLayer.noFill();
+    // } else if(fillProbability < 0.5){
+    //     graphicsLayer.fill(0);
+    // }
+    // print(fillProbability);
+
+    // add a grid bg
+
+    graphicsLayer.noFill();
+
+    let glyphCount = Math.floor(2 + fxrand() * 6);
+    for(let i = 0; i < glyphCount; i++){
+        randomWalkCount = 100 + fxrand() * 10000;
+        randomWalkSpacing = Math.floor(2.5 + fxrand() * 100);
+        glyphStrokeWeight = 0.05 + fxrand() * 10;
+        randomWalkerLinesColor(100 - i * 5); 
+        glyphs(1000 + fxrand() * graphicsLayer.width/2, 1000 + fxrand() * graphicsLayer.height/2, randomWalkSpacing, randomWalkCount, glyphStrokeWeight);
+        print(randomWalkSpacing);
+    }
+    print(glyphCount);
+
+    // should each glyph have its own graphics layer?
+    // it still needs a single glyph path on top
 
     print(strokeOption);
     push();
     translate(width/2, height/2);
     rotate(45);
 
-    spacing = Math.floor(5 + fxrand() * 30); 
-    //glyphCount = Math.floor(3 + fxrand() * 20);
-    glyphCount = 1; 
-    for(let i = 0; i < glyphCount; i++){
-        //tint(255, 100 - (i*10)); // <---- TINT IS SUPER SLOW
+    spacing = Math.floor(1 + fxrand() * 10);
+    glyphArrayCount = 5 + fxrand() * 30;
+    for(let i = 0; i < glyphArrayCount; i++){
+        let tintReductionStep = 100/glyphArrayCount;
+        tint(255, 100 - tintReductionStep * i);
         image(graphicsLayer, spacing * i, spacing * i); 
     }
     pop();
 
-    noFill();
-    stroke(bg);
-    strokeWeight(paddingFrame * 0.5);
-    rect(width / 2, height / 2, width, height);
+    //noFill();
+    //stroke(bg);
+    //strokeWeight(100 + fxrand() * paddingFrame);
+    //rect(width / 2, height / 2, width, height);
 
-    for (let i = 0; i <= columnNum; i++) {
-        let lineX = (i * width) / columnNum;
-        stroke(bg);
-        strokeWeight(paddingFrame * 0.25);
-        line(lineX, 0, lineX, height);
-    }
 
-    if (columnNum == 2) {
-        strokeCap(SQUARE);
-        stroke(bg);
-        strokeWeight(paddingFrame * 0.25);
-        // line 1
-        line(0, rowHeight0, width / 2, rowHeight0);
-
-        // line 2
-        line(width / 2, rowHeight1, width, rowHeight1);
-    }
-
-    if (columnNum == 3) {
-        strokeCap(SQUARE);
-        stroke(bg);
-        strokeWeight(paddingFrame * 0.25);
-        // line 1
-        line(0, rowHeight0, width / 3, rowHeight0);
-
-        // line 2
-        line(width * 0.33, rowHeight1, width * 0.66, rowHeight1);
-
-        // line 3
-        line(width * 0.66, rowHeight2, width, rowHeight2);
-    }
-
-    if (columnNum == 4) {
-        strokeCap(SQUARE);
-        stroke(bg);
-        strokeWeight(paddingFrame * 0.25);
-        // line 1
-        line(0, rowHeight0, width / 4, rowHeight0);
-
-        // line 2
-        line(width * 0.25, rowHeight1, width * 0.5, rowHeight1);
-
-        // line 3
-        line(width * 0.5, rowHeight2, width * 0.75, rowHeight2);
-
-        // line 3
-        line(width * 0.75, rowHeight3, width, rowHeight3);
-    }
+    //createColumns();
+    //createHorizontalDivisions();
 
     noLoop();
 
@@ -178,12 +146,13 @@ function draw() {
     //noisey(noiseCount, 0.05 + fxrand() * 1, noiseRand);
 
     //blend shapes 
+    blendMode(BLEND);
     //blendMode(SOFT_LIGHT);
     //fill(bg);
-    //shapeGradient();
-    //noStroke();
+    shapeGradient();
+    noStroke();
     //rect(width/2, height/2, width, height);
-    //rect(fxrand() * width, fxrand() * height, 100 + fxrand() * width, 100 + fxrand() * height);
+    rect(fxrand() * width, fxrand() * height, 100 + fxrand() * width, 100 + fxrand() * height);
     //shapeGradient();
     //blendMode(OVERLAY);
     //ellipse(fxrand() * width, fxrand() * height, 300 + fxrand() * width);
@@ -193,16 +162,16 @@ function draw() {
 // <----------------------------------------------- Draw Functions ----------------------------------------------------> //
 
 // Description: Sets the color for BG
-// TODO: Fix colors so they aren't so easter
+// TODO: Fix colors so they aren't so easter looking
 function setBackgroundColor(n) {
     // special rare bg
     if (n >= 0.99) {
-        // Gold Color
-        bg = color(50, 10, 100, 100);
+        // color_1
+        bg = color(53,53,99,100);
         return optionNum = 0;
-    } else if (n < 0.99 && n >= 0.825) {
-        // White Color
-        bg = color(255);
+    } else if (n < 0.99 && n >= 0) {
+        // color_2
+        bg = color(191,62,100,100);
         return optionNum = 1;
     } else if(n < 0.825 && n >= 0.66){
         // Black Color
@@ -228,36 +197,135 @@ function setBackgroundColor(n) {
 }
 
 // Description: main graphical function calling random walker algorithm 
-function glyphs(x, y, randomWalkSpacing, randomWalkCount, sw, alpha) {
+function glyphs(xPos, yPos, randomWalkSpacing, randomWalkCount, sw) {
+
     graphicsLayer.strokeWeight(sw);
-    randomWalkerLines(x, y, randomWalkSpacing, randomWalkCount, alpha);
+    //graphicsLayer.noFill();
+
+    let vertexType = fxrand();
+    if(vertexType >= 0.5){
+        randomWalkerLines(xPos, yPos, randomWalkSpacing, randomWalkCount);
+    } else {
+        randomWalkerCurveLines(xPos, yPos, randomWalkSpacing, randomWalkCount);
+    }
+    // debug 
+    // print("calling from glyphs: X = " + xPos);
+    // print("calling from glyphs: Y = " + yPos);
+    // graphicsLayer.fill(360,100,100,100);
+    // graphicsLayer.ellipse(xPos, yPos, 100);
 }
 
-function randomWalkerLines(x0, y0, randomWalkSpacing, randomWalkCount, alpha) {
+function randomWalkerLines(xPos, yPos, randomWalkSpacing, randomWalkCount) {
 
     graphicsLayer.beginShape();
     graphicsLayer.strokeJoin(MITER);
 
+    for (i = 0; i < randomWalkCount; i++) {
+        let randKey = Math.floor(fxrand()*4);
+        graphicsLayer.vertex(xPos, yPos);
+        const r = randKey;
+        switch (r) {
+            case 0:
+                if (xPos >= graphicsLayer.width || xPos <= 0) {
+                    xPos = graphicsLayer.width / 2;
+                } else {
+                    xPos = xPos + randomWalkSpacing;
+                }
+                break;
+            case 1:
+                xPos = xPos - randomWalkSpacing;
+                break;
+            case 2:
+                if (yPos >= graphicsLayer.height || yPos <= 0) {
+                    yPos = graphicsLayer.height / 2;
+                } else {
+                    yPos = yPos + randomWalkSpacing;
+                }
+                break;
+            case 3:
+                yPos = yPos - randomWalkSpacing;
+                break;
+        }
+    }
+    graphicsLayer.endShape();
+}
+
+function randomWalkerCurveLines(xPos, yPos, randomWalkSpacing, randomWalkCount) {
+
+    graphicsLayer.beginShape();
+    graphicsLayer.strokeJoin(MITER);
+
+    for (i = 0; i < randomWalkCount; i++) {
+        let randKey = Math.floor(fxrand()*4);
+        graphicsLayer.curveVertex(xPos, yPos);
+        const r = randKey;
+        switch (r) {
+            case 0:
+                if (xPos >= graphicsLayer.width || xPos <= 0) {
+                    xPos = graphicsLayer.width / 2;
+                } else {
+                    xPos = xPos + randomWalkSpacing;
+                }
+                break;
+            case 1:
+                xPos = xPos - randomWalkSpacing;
+                break;
+            case 2:
+                if (yPos >= graphicsLayer.height || yPos <= 0) {
+                    yPos = graphicsLayer.height / 2;
+                } else {
+                    yPos = yPos + randomWalkSpacing;
+                }
+                break;
+            case 3:
+                yPos = yPos - randomWalkSpacing;
+                break;
+        }
+    }
+    graphicsLayer.endShape();
+}
+
+function randomWalkerLinesColor(alpha) {
+    // structure this so there's multiple color combinations for each case that work with the bg color. See case 0 for example
     // stroke options are controlled here for graphicsLayer
     // let bgColorList = ["Gold", "White", "Black", "Brown", "Yellow", "Red", "Blue"];
+    // strokeOptions are for fxFeature and debugging help
     let randomNum = fxrand();
     switch (optionNum) {
         case 0:
-            if(randomNum <= 0.5){
-                graphicsLayer.stroke(0);
-                strokeOption = "Gold BG + Black Stroke"
-            } else {
-                graphicsLayer.stroke(255);
-                strokeOption = "Gold BG + White Stroke"
+            if(randomNum >= 0.75){
+                graphicsLayer.stroke(191,62,100,alpha);
+                strokeOption = "Gold BG + Blue Stroke"
+            } else if(randomNum >= 0.50 && randomNum < 0.75){
+                graphicsLayer.stroke(23,62,98,alpha);
+                strokeOption = "Gold BG + Orange Stroke"
+            } else if(randomNum >= 0.25 && randomNum < 0.50){
+                graphicsLayer.stroke(252,2,96,alpha);
+                strokeOption = "Gold BG + WhiteGrey Stroke"
+            } else if(randomNum < 0.25){
+                graphicsLayer.stroke(53,53,95,alpha);
+                strokeOption = "Gold BG + Red Stroke"
             }
             break;
         case 1: 
-            graphicsLayer.stroke(360, 0, 0, alpha);
-            strokeOption = "White BG + Black Stroke"
+            if(randomNum >= 0.75){
+                graphicsLayer.stroke(53,53,99,alpha);
+                strokeOption = "Blue BG + Yellow Stroke"
+            } else if(randomNum >= 0.50 && randomNum < 0.75){
+                graphicsLayer.stroke(23,62,98,alpha);
+                strokeOption = "Blue BG + Orange Stroke"
+            } else if(randomNum >= 0.25 && randomNum < 0.50){
+                graphicsLayer.stroke(252,2,96,alpha);
+                strokeOption = "Blue BG + WhiteGrey Stroke"
+            } else if(randomNum < 0.25){
+                graphicsLayer.stroke(274,33,77,alpha);
+                strokeOption = "Blue BG + Purple Stroke"
+            }
             break;
         case 2: 
-            graphicsLayer.stroke(200, 100, 100, alpha);
+            graphicsLayer.stroke(255);
             strokeOption = "Black BG + White Stroke"
+            print("IS THIS WORKING?!?!?!?!?!");
             break;
         case 3:
             graphicsLayer.stroke(360, 0, 0, alpha);
@@ -277,35 +345,6 @@ function randomWalkerLines(x0, y0, randomWalkSpacing, randomWalkCount, alpha) {
             // add red option
             break;
     }
-
-    for (i = 0; i < randomWalkCount; i++) {
-        let randKey = Math.floor(fxrand()*4);
-        graphicsLayer.curveVertex(x0, y0);
-        const r = randKey;
-        switch (r) {
-            case 0:
-                if (x0 >= graphicsLayer.width || x0 <= 0) {
-                    x0 = graphicsLayer.width / 2;
-                } else {
-                    x0 = x0 + randomWalkSpacing;
-                }
-                break;
-            case 1:
-                x0 = x0 - randomWalkSpacing;
-                break;
-            case 2:
-                if (y0 >= graphicsLayer.height || y0 <= 0) {
-                    y0 = graphicsLayer.height / 2;
-                } else {
-                    y0 = y0 + randomWalkSpacing;
-                }
-                break;
-            case 3:
-                y0 = y0 - randomWalkSpacing;
-                break;
-        }
-    }
-    graphicsLayer.endShape();
 }
 
 function randomWalkerLinesMask(x0, y0, len) {
@@ -330,7 +369,6 @@ function randomWalkerLinesMask(x0, y0, len) {
         }
     }
     endShape();
-    //noLoop();
 }
 
 function randomWalkerCircle(n, x0, y0, len) {
@@ -356,7 +394,6 @@ function randomWalkerCircle(n, x0, y0, len) {
         }
     }
     endShape();
-    //noLoop();
 }
 
 function randomWalkerRect(x0, y0, len) {
@@ -382,7 +419,7 @@ function randomWalkerRect(x0, y0, len) {
     }
     strokeWeight(5);
     rect(rectPts.x0, rectPts.y0, 100, 100);
-    //noLoop();
+
 }
 
 // Description: Creates a grid with Y Direction offset
@@ -566,6 +603,65 @@ function shapeGradient() {
     gradient.addColorStop(1, color2);
 
     drawingContext.fillStyle = gradient;
+}
+
+function createColumns(){
+    // create columns
+    for (let i = 0; i <= columnNum; i++) {
+        let lineX = (i * width) / columnNum;
+        stroke(bg);
+        strokeWeight(paddingFrame * 0.25);
+        line(lineX, 0, lineX, height);
+    }
+}
+
+function createHorizontalDivisions(){
+
+    // create horizontal divisions 
+    if (columnNum == 2) {
+        strokeCap(SQUARE);
+        stroke(bg);
+        strokeWeight(paddingFrame * 0.25);
+        // line 1
+        line(0, rowHeight0, width / 2, rowHeight0);
+
+        // line 2
+        line(width / 2, rowHeight1, width, rowHeight1);
+    }
+
+    if (columnNum == 3) {
+        let columnWidth = width/3; 
+        strokeCap(SQUARE);
+        stroke(bg);
+        strokeWeight(paddingFrame * 0.25);
+        // line 1
+        line(0, rowHeight0, columnWidth, rowHeight0);
+
+        // line 2
+        line(columnWidth, rowHeight1, columnWidth * 2, rowHeight1);
+
+        // line 3
+        line(columnWidth * 2, rowHeight2, width, rowHeight2);
+    }
+
+    if (columnNum == 4) {
+
+        strokeCap(SQUARE);
+        stroke(bg);
+        strokeWeight(paddingFrame * 0.25);
+        // line 1
+        line(0, rowHeight0, width / 4, rowHeight0);
+
+        // line 2
+        line(width * 0.25, rowHeight1, width * 0.5, rowHeight1);
+
+        // line 3
+        line(width * 0.5, rowHeight2, width * 0.75, rowHeight2);
+
+        // line 3
+        line(width * 0.75, rowHeight3, width, rowHeight3);
+    }
+        
 }
 
 // <----- Object Classes below this section ----->
