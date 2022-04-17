@@ -1,19 +1,5 @@
 // Please review LICENSE.md for usage limitations
 
-// to do
-// draw "section" line on original walker path to imply thickness 
-// experiement with shearing the noise and strokes found in the openProcessing library
-// Remove all glyph options except for random walker
-// All other glyphs can stand alone, no need for this many options
-// animate the render
-// add better noise and colors - last step
-// directional hatch needs to be strictly at 45 degrees and can change spacing
-// masking circles need more control and / or variance
-// project colors are undecided
-// shear noise and vary sizes
-// colour masks can be bigger 
-// line streaks like the image you found > using different color blending mode
-
 let n = fxrand();
 let lineCount = 20; //2 + Math.floor(fxrand()*20);
 let amplitude = 20 + Math.floor(fxrand() * 75);
@@ -27,6 +13,9 @@ let padding = 200;
 let x1, y1;
 let color1, color2, color3, color4, color5, color6, color7, color8, color9;
 let noiseRand = fxrand();
+let textureRand = fxrand();
+let tintProbability = fxrand();
+let originalPlacement = fxrand();
 let noiseCount = 50000 + fxrand() * 300000;
 let glyphOption;
 let randomWalkCount;
@@ -45,9 +34,12 @@ let glyphArrayCount;
 let bgColorList = ["Gold", "White", "Black", "Brown", "Yellow", "Red", "Blue"];
 let glyphKey; 
 let glyphStrokeWeight;
+let textureStrokeWeight;
+let optionNum;
+let bgColorFeature; 
+const glyphCount = Math.floor(5 + fxrand() * 10);
 
 function setup() { 
-    //createCanvas(innerWidth, innerHeight);
     createCanvas(2500, 2500);
     graphicsLayer = createGraphics(width*2, height*2);
     graphicsLayer.colorMode(HSB, 360, 100, 100, 100);
@@ -59,7 +51,7 @@ function setup() {
     // color background function
     setBackgroundColor(n);
     background(bg);
-    print("Background Color = " + optionNum);
+    //print("Background Color = " + optionNum);
 
     // positioning variables
     x1 = fxrand() * graphicsLayer.width;
@@ -75,132 +67,152 @@ function setup() {
     rowHeight3 = fxrand() * height;
     glyphKey = Math.floor(fxrand() * 3); // controls the glyph call
     paddingFrame = 100 + fxrand() * 400;
+    textureStrokeWeight = 0.05 + fxrand() * 10;
 }
 
 function draw() {
+    getBgColorOption();
+    getFadedFeature();
 
     graphicsLayer.rectMode(CENTER);
-
-    // let fillProbability = fxrand();
-    // if(fillProbability >= 0.5){
-    //     graphicsLayer.noFill();
-    // } else if(fillProbability < 0.5){
-    //     graphicsLayer.fill(0);
-    // }
-    // print(fillProbability);
-
-    // add a grid bg
-
     graphicsLayer.noFill();
 
-    let glyphCount = Math.floor(2 + fxrand() * 6);
     for(let i = 0; i < glyphCount; i++){
-        randomWalkCount = 100 + fxrand() * 10000;
-        randomWalkSpacing = Math.floor(2.5 + fxrand() * 100);
+        randomWalkCount = 100 + fxrand() * 500;
+        randomWalkSpacing = Math.floor(10 + fxrand() * 100);
         glyphStrokeWeight = 0.05 + fxrand() * 10;
         randomWalkerLinesColor(100 - i * 5); 
         glyphs(1000 + fxrand() * graphicsLayer.width/2, 1000 + fxrand() * graphicsLayer.height/2, randomWalkSpacing, randomWalkCount, glyphStrokeWeight);
-        print(randomWalkSpacing);
+        //print(randomWalkSpacing);
     }
-    print(glyphCount);
 
-    // should each glyph have its own graphics layer?
-    // it still needs a single glyph path on top
-
-    print(strokeOption);
     push();
     translate(width/2, height/2);
     rotate(45);
+    //spacing = 10;
+    //glyphArrayCount = 100;
+    spacing = Math.floor(glyphStrokeWeight + fxrand() * 10);
+    glyphArrayCount = 5 + fxrand() * 100;
 
-    spacing = Math.floor(1 + fxrand() * 10);
-    glyphArrayCount = 5 + fxrand() * 30;
+    print("this is the tent = " + tintProbability);
     for(let i = 0; i < glyphArrayCount; i++){
         let tintReductionStep = 100/glyphArrayCount;
-        tint(255, 100 - tintReductionStep * i);
+        if(tintProbability <= 0.5){
+            tint(255, 100 - tintReductionStep * i);
+        }
         image(graphicsLayer, spacing * i, spacing * i); 
     }
+
+    let originalSpacing = -50 + fxrand();
+
+    if(originalPlacement >= 0.5){
+        tint(255,100);
+        image(graphicsLayer, originalSpacing, originalSpacing);
+    }
+
     pop();
-
-    //noFill();
-    //stroke(bg);
-    //strokeWeight(100 + fxrand() * paddingFrame);
-    //rect(width / 2, height / 2, width, height);
-
-
-    //createColumns();
-    //createHorizontalDivisions();
-
     noLoop();
 
-    // Erased Parts
-    //blendMode(BLEND);
+    stroke(360, 100, 100, 100);
+    noisey(noiseCount, 0.75, noiseRand);
 
-    //stroke(bg);
-    //directionalHatch();
-    //randomWalkerLinesMask(xRand, yRand, 5 + fxrand() * 25);
-    //fill(360,100,100,100);
-    //randomWalkerCircle(10, xRand, yRand, 5 + fxrand() * 25);
-    //randomWalkerRect(10, xRand, yRand, 5 + fxrand() * 25);
-    // add noise
-    //stroke(360, 100, 100, 100);
-    //noisey(noiseCount, 0.05 + fxrand() * 1, noiseRand);
-
-    //blend shapes 
-    blendMode(BLEND);
-    //blendMode(SOFT_LIGHT);
-    //fill(bg);
-    shapeGradient();
-    noStroke();
-    //rect(width/2, height/2, width, height);
-    rect(fxrand() * width, fxrand() * height, 100 + fxrand() * width, 100 + fxrand() * height);
-    //shapeGradient();
-    //blendMode(OVERLAY);
-    //ellipse(fxrand() * width, fxrand() * height, 300 + fxrand() * width);
-
+    if(textureRand >= 0.5){
+        blendMode(OVERLAY);
+        verticalLinesTexture(textureStrokeWeight);
+    }
 }
 
 // <----------------------------------------------- Draw Functions ----------------------------------------------------> //
 
 // Description: Sets the color for BG
-// TODO: Fix colors so they aren't so easter looking
 function setBackgroundColor(n) {
     // special rare bg
-    if (n >= 0.99) {
+    if (n >= 0.9091) { 
         // color_1
         bg = color(53,53,99,100);
         return optionNum = 0;
-    } else if (n < 0.99 && n >= 0) {
+    } else if (n < 0.9091 && n >= 0.8182) { 
         // color_2
         bg = color(191,62,100,100);
         return optionNum = 1;
-    } else if(n < 0.825 && n >= 0.66){
-        // Black Color
-        bg = color(0);
+    } else if(n < 0.8182 && n >= 0.7273){ 
+        // color_3
+        bg = color(23,62,98,100);
         return optionNum = 2;
-    } else if(n < 0.66 && n >= 0.495){
-        // Brown Color
-        bg = color(23, 3, 95, 100);
+    } else if(n < 0.7273 && n >= 0.6364){
+        // color_4
+        bg = color(252,2,96,100);
         return optionNum = 3;
-    } else if(n < 0.495 && n >= 0.33){
-        // Yellow Color
-        bg = color(49, 5, 100, 100);
+    } else if(n < 0.6364 && n >= 0.5455){
+        // color_5
+        bg = color(274,33,77,100);    
         return optionNum = 4;
-    } else if(n < 0.33 && n >= 0.165){
-        // Red Color
-        bg = color(360, 5, 100, 100);
+    } else if(n < 0.5455 && n >= 0.4546){
+        // color_6
+        bg = color(353,67,89,100);
         return optionNum = 5;
-    } else if(n < 0.165 && n >= 0){
-        // Blue Color
-        bg = color(180, 5, 100, 100);
+    } else if(n < 0.4546 && n >= 0.3637){
+        // color_7
+        bg = color(238,69,82,100);
         return optionNum = 6;
+    } else if(n < 0.3637 && n >= 0.2728){
+        // color_8
+        bg = color(346,17,96,100);
+        return optionNum = 7;
+    } else if(n < 0.2728 && n >= 0.1819){
+        // color_9
+        bg = color(0,0,100,100);
+        return optionNum = 8;
+    } else if(n < 0.1819 && n >= 0.091){
+        // color_10
+        bg = color(0,0,0,100);
+        return optionNum = 9;
+    } else if(n < 0.091){
+        // color_11
+        bg = color(252,2,96,100);
+        return optionNum = 10;
     }
+}
+
+function getBgColorOption(n){
+    // special rare bg
+    if (n >= 0.9091) { 
+        return "color_1";
+    } else if (n < 0.9091 && n >= 0.8182) { 
+        return "color_2";
+    } else if(n < 0.8182 && n >= 0.7273){ 
+        return "color_3";
+    } else if(n < 0.7273 && n >= 0.6364){
+        return "color_4";
+    } else if(n < 0.6364 && n >= 0.5455){   
+        return "color_5";
+    } else if(n < 0.5455 && n >= 0.4546){
+        return "color_6";
+    } else if(n < 0.4546 && n >= 0.3637){
+        return "color_7";
+    } else if(n < 0.3637 && n >= 0.2728){
+        return "color_8";
+    } else if(n < 0.2728 && n >= 0.1819){
+        return "color_9";
+    } else if(n < 0.1819 && n >= 0.091){
+        return "color_10";
+    } else if(n < 0.091){
+        return "color_11";
+    }
+}
+
+function getFadedFeature(n){
+    // special rare bg
+    if (n <= 0.5) { 
+        return "True";
+    } else { 
+        return "False";}
 }
 
 // Description: main graphical function calling random walker algorithm 
 function glyphs(xPos, yPos, randomWalkSpacing, randomWalkCount, sw) {
 
     graphicsLayer.strokeWeight(sw);
-    //graphicsLayer.noFill();
 
     let vertexType = fxrand();
     if(vertexType >= 0.5){
@@ -208,11 +220,6 @@ function glyphs(xPos, yPos, randomWalkSpacing, randomWalkCount, sw) {
     } else {
         randomWalkerCurveLines(xPos, yPos, randomWalkSpacing, randomWalkCount);
     }
-    // debug 
-    // print("calling from glyphs: X = " + xPos);
-    // print("calling from glyphs: Y = " + yPos);
-    // graphicsLayer.fill(360,100,100,100);
-    // graphicsLayer.ellipse(xPos, yPos, 100);
 }
 
 function randomWalkerLines(xPos, yPos, randomWalkSpacing, randomWalkCount) {
@@ -307,7 +314,7 @@ function randomWalkerLinesColor(alpha) {
                 strokeOption = "Gold BG + Red Stroke"
             }
             break;
-        case 1: 
+        case 1:
             if(randomNum >= 0.75){
                 graphicsLayer.stroke(53,53,99,alpha);
                 strokeOption = "Blue BG + Yellow Stroke"
@@ -322,27 +329,164 @@ function randomWalkerLinesColor(alpha) {
                 strokeOption = "Blue BG + Purple Stroke"
             }
             break;
-        case 2: 
-            graphicsLayer.stroke(255);
-            strokeOption = "Black BG + White Stroke"
-            print("IS THIS WORKING?!?!?!?!?!");
+        case 2:
+            if(randomNum >= 0.75){
+                graphicsLayer.stroke(53,53,99,alpha);
+                strokeOption = "Orange BG + Yellow Stroke"
+            } else if(randomNum >= 0.50 && randomNum < 0.75){
+                graphicsLayer.stroke(191,62,100,alpha);
+                strokeOption = "Orange BG + Blue Stroke"
+            } else if(randomNum >= 0.25 && randomNum < 0.50){
+                graphicsLayer.stroke(252,2,96,alpha);
+                strokeOption = "Orange BG + WhiteGrey Stroke"
+            } else if(randomNum < 0.25){
+                graphicsLayer.stroke(274,33,77,alpha);
+                strokeOption = "Orange BG + Purple Stroke"
+            }
             break;
         case 3:
-            graphicsLayer.stroke(360, 0, 0, alpha);
-            strokeOption = "Brown BG + Black Stroke"
+            if(randomNum >= 0.83){
+                graphicsLayer.stroke(23,62,98,alpha);
+                strokeOption = "Orange BG + Orange Stroke"
+            } else if(randomNum >= 0.66 && randomNum < 0.83){
+                graphicsLayer.stroke(191,62,100,alpha);
+                strokeOption = "Orange BG + Blue Stroke"
+            } else if(randomNum >= 0.50 && randomNum < 0.66){
+                graphicsLayer.stroke(274,33,77,alpha);
+                strokeOption = "Blue BG + Purple Stroke"
+            } else if(randomNum >= 0.33 && randomNum < 0.50){
+                graphicsLayer.stroke(238,69,82,alpha);
+                strokeOption = "Orange BG + Dark Blue Stroke"
+            } else if(randomNum >= 0.17 && randomNum < 0.33){
+                graphicsLayer.stroke(353,67,98,alpha);
+                strokeOption = "Orange BG + Red Stroke"
+            } else if(randomNum < 0.17){
+                graphicsLayer.stroke(173,64,87,alpha);
+                strokeOption = "Orange BG + Mint Green Stroke"
+            }
             break;
-        case 4: 
-            graphicsLayer.stroke(360, 0, 0, alpha);
-            strokeOption = "Yellow BG + Black Stroke"
+        case 4:
+            if(randomNum >= 0.75){
+                graphicsLayer.stroke(191,62,100,alpha);
+                strokeOption = "Purple BG + Blue Stroke"
+            } else if(randomNum >= 0.50 && randomNum < 0.75){
+                graphicsLayer.stroke(23,62,98,alpha);
+                strokeOption = "Purple BG + Orange Stroke"
+            } else if(randomNum >= 0.25 && randomNum < 0.50){
+                graphicsLayer.stroke(252,2,96,alpha);
+                strokeOption = "Purple BG + WhiteGrey Stroke"
+            } else if(randomNum < 0.25){
+                graphicsLayer.stroke(274,33,10,alpha);
+                strokeOption = "Purple BG + Dark Purple Stroke"
+            }
             break;
-        case 5: 
-            graphicsLayer.stroke(360, 20, 50, alpha);
-            strokeOption = "Red BG + Black Stroke"
+        case 5:
+            if(randomNum >= 0.75){
+                graphicsLayer.stroke(238,69,82,alpha);
+                strokeOption = "Red BG + Dark Blue Stroke"
+            } else if(randomNum >= 0.50 && randomNum < 0.75){
+                graphicsLayer.stroke(173,64,87,alpha);
+                strokeOption = "Red BG + Mint Green Stroke"
+            } else if(randomNum >= 0.25 && randomNum < 0.50){
+                graphicsLayer.stroke(252,2,96,alpha);
+                strokeOption = "Red BG + WhiteGrey Stroke"
+            } else if(randomNum < 0.25){
+                graphicsLayer.stroke(353,67,75,alpha);
+                strokeOption = "Red BG + Dark Red Stroke"
+            }
             break;
         case 6:
-            graphicsLayer.stroke(200, 20, 50, alpha);
-            strokeOption = "Blue BG + Dark blue stroke"
-            // add red option
+            if(randomNum >= 0.75){
+                graphicsLayer.stroke(346,17,96,alpha);
+                strokeOption = "Blue BG + Pink Stroke"
+            } else if(randomNum >= 0.50 && randomNum < 0.75){
+                graphicsLayer.stroke(173,64,87,alpha);
+                strokeOption = "Blue BG + Mint Green Stroke"
+            } else if(randomNum >= 0.25 && randomNum < 0.50){
+                graphicsLayer.stroke(252,2,96,alpha);
+                strokeOption = "Blue BG + WhiteGrey Stroke"
+            } else if(randomNum < 0.25){
+                graphicsLayer.stroke(353,67,98,alpha);
+                strokeOption = "Blue BG + Red Stroke"
+            }
+            break;
+        case 7:
+            if(randomNum >= 0.75){
+                graphicsLayer.stroke(238,69,82,alpha);
+                strokeOption = "Pink BG + Dark Blue Stroke"
+            } else if(randomNum >= 0.50 && randomNum < 0.75){
+                graphicsLayer.stroke(173,64,87,alpha);
+                strokeOption = "Pink BG + Mint Green Stroke"
+            } else if(randomNum >= 0.25 && randomNum < 0.50){
+                graphicsLayer.stroke(252,2,96,alpha);
+                strokeOption = "Pink BG + WhiteGrey Stroke"
+            } else if(randomNum < 0.25){
+                graphicsLayer.stroke(353,67,98,alpha);
+                strokeOption = "Pink BG + Red Stroke"
+            }
+            break;
+        case 8:
+            if(randomNum >= 0.67){
+                graphicsLayer.stroke(0,0,0,alpha);
+                strokeOption = "White BG + Red Stroke"
+            } else if(randomNum >= 0.34 && randomNum < 0.67){
+                graphicsLayer.stroke(210,3,46,alpha);
+                strokeOption = "White BG + Red Stroke"
+            } else if(randomNum < 0.34){
+                graphicsLayer.stroke(210,1,85,alpha);
+                strokeOption = "White BG + Red Stroke"
+            } 
+            break;
+        case 9:
+            if(randomNum >= 0.67){
+                graphicsLayer.stroke(0,0,100,100);
+                strokeOption = "Black BG + Black Stroke"
+            } else if(randomNum >= 0.34 && randomNum < 0.67){
+                graphicsLayer.stroke(0,0,80,100);
+                strokeOption = "Black BG + Gray Stroke"
+            } else if(randomNum < 0.34){
+                graphicsLayer.stroke(0,0,60,100);
+                strokeOption = "Black BG + Light Gray Stroke"
+            } 
+            break;
+        case 10:
+            if(randomNum >= 0.9167){
+                graphicsLayer.stroke(0,0,0,alpha);
+                strokeOption = "White BG + Blue Stroke"
+            } else if(randomNum >= 0.8334 && randomNum < 0.9167){
+                graphicsLayer.stroke(0,0,80,alpha);
+                strokeOption = "White BG + Orange Stroke"
+            } else if(randomNum >= 0.7501 && randomNum < 0.8334){
+                graphicsLayer.stroke(0,0,60,alpha);
+                strokeOption = "White BG + WhiteGrey Stroke"
+            } else if(randomNum >= 0.6668 && randomNum < 0.7501){
+                graphicsLayer.stroke(53,53,99,alpha);
+                strokeOption = "GoWhiteld BG + Red Stroke"
+            } else if(randomNum >= 0.5835 && randomNum < 0.6668){
+                graphicsLayer.stroke(191,62,100,alpha);
+                strokeOption = "White BG + Red Stroke"
+            } else if(randomNum >= 0.5002 && randomNum < 0.5835){
+                graphicsLayer.stroke(23,62,98,alpha);
+                strokeOption = "White BG + Red Stroke"
+            } else if(randomNum >= 0.4169 && randomNum < 0.5002){
+                graphicsLayer.stroke(252,2,96,alpha);
+                strokeOption = "White BG + Red Stroke"
+            } else if(randomNum >= 0.3336 && randomNum < 0.4169){
+                graphicsLayer.stroke(274,33,77,alpha);
+                strokeOption = "GoWhiteld BG + Red Stroke"
+            } else if(randomNum >= 0.2503 && randomNum < 0.3336){
+                graphicsLayer.stroke(353,67,98,alpha);
+                strokeOption = "White BG + Red Stroke"
+            } else if(randomNum >= 0.167 && randomNum < 0.2503){
+                graphicsLayer.stroke(238,69,82,alpha);
+                strokeOption = "White BG + Red Stroke"
+            } else if(randomNum >= 0.837 && randomNum < 0.167){
+                graphicsLayer.stroke(346,17,96,alpha);
+                strokeOption = "White BG + Red Stroke"
+            } else if(randomNum < 0.837){
+                graphicsLayer.stroke(173,64,87,alpha);
+                strokeOption = "White BG + Mint Green Stroke"
+            } 
             break;
     }
 }
@@ -664,6 +808,24 @@ function createHorizontalDivisions(){
         
 }
 
+function verticalLinesTexture(textureStrokeWeight){
+    let verticalX1Pos = 0;
+    let verticalY1Pos = 0;
+    let verticalX2Pos = 0;
+    let verticalY2Pos = height;
+    strokeWeight(textureStrokeWeight);
+    lineCount = width / textureStrokeWeight; 
+    for(i = 0; i <= lineCount; i++){
+        let textureMaxAlpha = 30;
+        let textureAlpha = fxrand() * textureMaxAlpha;
+        stroke(0, textureAlpha);
+        line(verticalX1Pos, verticalY1Pos, verticalX2Pos, verticalY2Pos);
+        verticalX1Pos = verticalX1Pos + textureStrokeWeight;
+        verticalX2Pos = verticalX2Pos + textureStrokeWeight;
+    }
+    noLoop();
+}
+
 // <----- Object Classes below this section ----->
 class Lines {
     constructor(x1, y1, x2, y2) {
@@ -687,48 +849,24 @@ function keyPressed() {
     }
 }
 
-// add gradient over the whole thing
+// function resize() {
 
-// blendMode(OVERLAY);
-// let randX = fxrand() * width;
-// let randY = fxrand() * height;
-// let randW1 = 50 + fxrand() * 500;
-// let randW2 = 50 + fxrand() * 500;
-// noStroke();
-// fill(200,35,100,100);
-// rect(randX, randY, randW1, randW2);
+//     var canvas = document.getElementById('GLYPHS');
+//     var canvasRatio = canvas.height / canvas.width;
+//     var windowRatio = window.innerHeight / window.innerWidth;
+//     var width;
+//     var height;
 
-// let randX1 = fxrand() * width;
-// let randY1 = fxrand() * height;
-// let randR = 500 + fxrand() * 2000;
-// noStroke();
-// fill(200,75,100,100);
-// ellipse(randX1, randY1, randR);
+//     if (windowRatio < canvasRatio) {
+//         height = window.innerHeight;
+//         width = height / canvasRatio;
+//     } else {
+//         width = window.innerWidth;
+//         height = width * canvasRatio;
+//     }
 
-// blendMode(NORMAL);
-// noFill();
-// stroke(360, 0, 50, 10);
-// strokeWeight(5);
-// rect(width/2, height/2, width, height);
+//     canvas.style.width = width + 'px';
+//     canvas.style.height = height + 'px';
+// };
 
-
-
-
-// // Layer 1 - Create draw layer. All drawings need to happen here if wanting to be clipped by mask.
-// canvasDraw.stroke(bgLineColor);
-// canvasDraw.strokeWeight(bgStrokeWeight);
-// lineTexture(lineTextureCount);
-
-// // Layer 2 - Create mask layer
-// mLayer = createGraphics(formatWidth, formatHeight);
-// mLayer.translate(0, 0); // move the mask into place. 0,0 for full sized CG.
-
-// // <----- make any shapes you like to use as a mask below here ----->
-
-
-// // Make the mask layer an actual mask.
-// drawClone = canvasDraw.get();
-// drawClone.mask(mLayer.get());
-
-// // Instantiate the mask layer.
-// image(drawClone, 0, 0);
+// window.addEventListener('resize', resize, false);

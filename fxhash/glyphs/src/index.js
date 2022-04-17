@@ -14,16 +14,17 @@
 // More about it in the guide, section features:
 // [https://fxhash.xyz/articles/guide-mint-generative-token#features]
 //
-// window.$fxhashFeatures = {
-//   "Background": "Black",
-//   "Number of lines": 10,
-//   "Inverted": true
-// }
+window.$fxhashFeatures = {
+  "Color Palette": getBgColorOption(n),
+  "Glyph Count": glyphCount,
+  "Faded": getFadedFeature(tintProbability)
+}
 
 // this code writes the values to the DOM as an example
 const container = document.createElement("div")
 container.innerText = `
-  random hash: ${fxhash}\n
-  some pseudo random values: [ ${fxrand()}, ${fxrand()}, ${fxrand()}, ${fxrand()}, ${fxrand()},... ]\n
+  Color Palette: ${window.$fxhashFeatures["Color Palette"]}\n
+  Glyph Count: ${window.$fxhashFeatures["Glyph Count"]}\n
+  Faded: ${window.$fxhashFeatures["Faded"]}\n
 `
     //document.body.prepend(container)
