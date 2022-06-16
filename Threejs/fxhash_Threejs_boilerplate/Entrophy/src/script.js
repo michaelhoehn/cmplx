@@ -58,32 +58,33 @@ gui.add(material, 'roughness').min(0).max(1).step(0.001)
 /**
  * Objects
  */
-const box = new THREE.Mesh(
-    new THREE.BoxGeometry(fxrand(),fxrand(),fxrand()),
-    material
-)
-box.position.set(0,-0.25,-1.5)
-box.castShadow = true
-box.receiveShadow = true
 
-const sphere = new THREE.Mesh(
-    new THREE.SphereGeometry(0.5, 32, 32),
-    material
-)
+let floorCount = 20;
+let slabWidthX = 1; 
+let slabWidthY = 1;
+let floorOffset = 0;
+let floorToFloorHeight = 0.25;
 
-sphere.castShadow = true
-sphere.receiveShadow = true
+for(let i = 0; i < floorCount; i++){
+    const slab = new THREE.Mesh(
+        new THREE.BoxGeometry(slabWidthX, 0.02, slabWidthY),
+        material
+    )
+    slab.position.set(0,floorOffset,0)
+    slab.castShadow = true
+    slab.receiveShadow = true
+    scene.add(slab)
+    floorOffset+=floorToFloorHeight;
+}
 
 const plane = new THREE.Mesh(
     new THREE.PlaneGeometry(5, 5),
     material
 )
 plane.rotation.x = - Math.PI * 0.5
-plane.position.y = - 0.5
-
 plane.receiveShadow = true
 
-scene.add(sphere, plane, box)
+scene.add(plane)
 
 /**
  * Sizes
@@ -143,9 +144,9 @@ const tick = () =>
     const elapsedTime = clock.getElapsedTime()
 
     // animate the sphere
-    sphere.position.x = Math.cos(elapsedTime)
-    sphere.position.z = 1 + Math.sin(elapsedTime)
-    sphere.position.y = Math.abs(Math.sin(elapsedTime * 3))
+    // sphere.position.x = Math.cos(elapsedTime)
+    // sphere.position.z = 1 + Math.sin(elapsedTime)
+    // sphere.position.y = Math.abs(Math.sin(elapsedTime * 3))
 
     // Update controls
     controls.update()
