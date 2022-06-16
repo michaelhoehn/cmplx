@@ -2,6 +2,7 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui'
+import { Camera } from 'three'
 
 /**
  * Base
@@ -44,7 +45,7 @@ directionalLight.shadow.camera.far = 8
 // directionalLight.shadow.radius = 10
 
 const directionalLightCameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera)
-directionalLightCameraHelper.visible = false
+directionalLightCameraHelper.visible = true
 scene.add(directionalLightCameraHelper)
 
 /**
@@ -59,11 +60,13 @@ gui.add(material, 'roughness').min(0).max(1).step(0.001)
  * Objects
  */
 
-let floorCount = 20;
-let slabWidthX = 1; 
-let slabWidthY = 1;
-let floorOffset = 0;
-let floorToFloorHeight = 0.25;
+// floor slabs 
+let slabs = []
+let floorCount = 10
+let slabWidthX = 1
+let slabWidthY = 1
+let floorOffset = 0
+let floorToFloorHeight = 0.25
 
 for(let i = 0; i < floorCount; i++){
     const slab = new THREE.Mesh(
@@ -71,9 +74,10 @@ for(let i = 0; i < floorCount; i++){
         material
     )
     slab.position.set(0,floorOffset,0)
+    scene.add(slab)
+    slabs.push(slab);
     slab.castShadow = true
     slab.receiveShadow = true
-    scene.add(slab)
     floorOffset+=floorToFloorHeight;
 }
 
@@ -84,7 +88,27 @@ const plane = new THREE.Mesh(
 plane.rotation.x = - Math.PI * 0.5
 plane.receiveShadow = true
 
-scene.add(plane)
+// column grids
+let columns = []
+let columnX = 5
+let columnY = 5
+let columnXSpacing = 0.2
+let columnYSpacing = 0.2
+let placementOffset = 0
+let columnOffset = -slabWidthX/2 + placementOffset
+
+for(let i = 0; i < columnX; i++){
+    const column = new THREE.Mesh(
+        new THREE.BoxGeometry(0.01, floorToFloorHeight * floorCount, 0.01),
+        material        
+    )
+    column.position.set(columnOffset, ((floorToFloorHeight * floorCount)/2) - floorToFloorHeight, 0)
+    columns.push(column)
+    scene.add(column)
+    columnOffset+=columnXSpacing
+}
+
+//scene.add(plane)
 
 /**
  * Sizes
@@ -113,13 +137,23 @@ window.addEventListener('resize', () =>
  * Camera
  */
 // Base camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.x = 1
-camera.position.y = 1
-camera.position.z = 2
+const camera = new THREE.PerspectiveCamera(30, sizes.width / sizes.height, 0.1, 100)
+camera.position.x = 3.6
+camera.position.y = 0.5
+camera.position.z = 2.13
 scene.add(camera)
 
-// Controls
+// Camera target
+const camTarget = slabs[slabs.length - 1].position // this is always pointed to the top slab
+// may want to point at random slabs 
+// also need to shift the target away from the centre for composition purposes
+
+// Camera loction finding 
+gui.add(camera.position, 'x').min(0).max(10).step(0.001)
+gui.add(camera.position, 'y').min(0).max(10).step(0.001)
+gui.add(camera.position, 'z').min(0).max(10).step(0.001)
+
+//Controls -- debug
 const controls = new OrbitControls(camera, canvas)
 controls.enableDamping = true
 
@@ -148,8 +182,11 @@ const tick = () =>
     // sphere.position.z = 1 + Math.sin(elapsedTime)
     // sphere.position.y = Math.abs(Math.sin(elapsedTime * 3))
 
+    // Update camera
+    camera.lookAt(camTarget)
+
     // Update controls
-    controls.update()
+    //controls.update()
 
     // Render
     renderer.render(scene, camera)
