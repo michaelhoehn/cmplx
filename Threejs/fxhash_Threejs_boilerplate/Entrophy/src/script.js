@@ -2,7 +2,7 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui'
-import { Camera } from 'three'
+import { Camera, TetrahedronBufferGeometry } from 'three'
 
 /**
  * Base
@@ -10,6 +10,7 @@ import { Camera } from 'three'
 // Debug
 const gui = new dat.GUI()
 const helper = new THREE.AxesHelper(5)
+helper.visible = false
 
 
 // Canvas
@@ -23,28 +24,23 @@ scene.add(helper)
  * Lights
  */
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.3)
-gui.add(ambientLight, 'intensity').min(0).max(1).step(0.001)
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
 scene.add(ambientLight)
 
 // Directional light
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.3)
-directionalLight.position.set(2, 2, - 1)
-gui.add(directionalLight, 'intensity').min(0).max(1).step(0.001)
-gui.add(directionalLight.position, 'x').min(- 5).max(5).step(0.001)
-gui.add(directionalLight.position, 'y').min(- 5).max(5).step(0.001)
-gui.add(directionalLight.position, 'z').min(- 5).max(5).step(0.001)
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5)
+directionalLight.position.set(25, 8, 4)
 scene.add(directionalLight)
 directionalLight.castShadow = true
 
 directionalLight.shadow.mapSize.width = 2048
 directionalLight.shadow.mapSize.height = 2048
-directionalLight.shadow.camera.top = 2
-directionalLight.shadow.camera.bottom = -2
-directionalLight.shadow.camera.right = 2
-directionalLight.shadow.camera.left = -2
+directionalLight.shadow.camera.top = 10
+directionalLight.shadow.camera.bottom = -10
+directionalLight.shadow.camera.right = 10
+directionalLight.shadow.camera.left = -10
 directionalLight.shadow.camera.near = 1
-directionalLight.shadow.camera.far = 8
+directionalLight.shadow.camera.far = 50
 // directionalLight.shadow.radius = 10
 
 const directionalLightCameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera)
@@ -56,17 +52,36 @@ scene.add(directionalLightCameraHelper)
  */
 const material = new THREE.MeshStandardMaterial()
 material.roughness = 0.7
-gui.add(material, 'metalness').min(0).max(1).step(0.001)
-gui.add(material, 'roughness').min(0).max(1).step(0.001)
 
 /**
  * Objects
  */
 
+const parameters = {}
+parameters.floorCount = 20
+parameters.slabWidthX = 2
+parameters.slabWidthY = 4
+parameters.floorOffset = 0
+parameters.floorToFloorHeight= 0.25
+parameters.columnSpacing = 0.25
+parameters.edgeOffset = parameters.slabWidthY/2 - parameters.columnSpacing
+parameters.widthX = parameters.slabWidthX - parameters.edgeOffset/4
+parameters.widthY = parameters.slabWidthY - parameters.edgeOffset/4
+parameters.countX = parameters.widthX / parameters.columnSpacing
+parameters.countY = parameters.widthY / parameters.columnSpacing
+
+const generateBuilding = () => {
+    /**
+     * Geometry 
+     */
+}
+
+generateBuilding()
+
 // Slab Parameters
-let floorCount = 10
+let floorCount = 20
 let slabWidthX = 2
-let slabWidthY = 1
+let slabWidthY = 4
 let floorOffset = 0
 let floorToFloorHeight = 0.25
 
@@ -87,28 +102,27 @@ for(let i = 0; i < floorCount; i++){
     floorOffset+=floorToFloorHeight;
 }
 
-// Column Parameters
-let columnX = 10
-let columnY = 5
-let columnXSpacing = 0.2 // this needs to be a calculation from the slab dimension
-let columnYSpacing = 0.2
-let placementOffset = 0
-let columnOffset = -slabWidthX/2 + placementOffset
-
 // Column Init
-const columns = new THREE.Group()
-const columnGeometry = new THREE.BoxGeometry(0.01, floorToFloorHeight * floorCount, 0.01)
-scene.add(columns)
+const testGeoGroup = new THREE.Group()
+const testGeo = new THREE.BoxGeometry(0.01, floorToFloorHeight * floorCount, 0.01)
+scene.add(testGeoGroup)
 
-for(let i = 0; i < columnX; i++){
-    const column = new THREE.Mesh(
-        columnGeometry,
-        material   
-    )
-    column.position.set(columnOffset, ((floorToFloorHeight * floorCount)/2) - floorToFloorHeight, 0)
-    columnOffset+=columnXSpacing
-    column.castShadow = true
-    columns.add(column)
+let columnSpacing = 0.25
+let edgeOffset = slabWidthY/2 - columnSpacing
+let widthX = slabWidthX - edgeOffset/4
+let widthY = slabWidthY - edgeOffset/4
+let countX = widthX / columnSpacing
+let countY = widthY / columnSpacing
+
+for(let x = 0; x <= countX; x++){
+    for(let y = 0; y <= countY; y++){
+        const testBox = new THREE.Mesh(testGeo, material)
+        const posX = (x/countX) * widthX - widthX / 2
+        const posY = (y/countY) * widthY - widthY / 2
+        testBox.position.set(posX, ((floorToFloorHeight * floorCount)/2) - floorToFloorHeight, posY)
+        testGeoGroup.add(testBox)
+        testBox.castShadow = true
+    }
 }
 
 /**
@@ -149,10 +163,23 @@ scene.add(camera)
 // may want to point at random slabs 
 // also need to shift the target away from the centre for composition purposes
 
-// Camera loction finding 
-gui.add(camera.position, 'x').min(0).max(10).step(0.001)
-gui.add(camera.position, 'y').min(0).max(10).step(0.001)
-gui.add(camera.position, 'z').min(0).max(10).step(0.001)
+// GUI Controls
+const folder0 = gui.addFolder('Building Controls')
+const folder1 = gui.addFolder('Lighting Controls')
+const folder2 = gui.addFolder('Camera Controls')
+// camera controls
+folder2.add(camera.position, 'x').min(0).max(10).step(0.001).name('camX')
+folder2.add(camera.position, 'y').min(0).max(10).step(0.001).name('camY')
+folder2.add(camera.position, 'z').min(0).max(10).step(0.001).name('camZ')
+// building controls
+folder0.add(material, 'metalness').min(0).max(1).step(0.001)
+folder0.add(material, 'roughness').min(0).max(1).step(0.001)
+// lighting controls
+folder1.add(directionalLight.position, 'x').min(- 50).max(50).step(0.001).name('dLight X')
+folder1.add(directionalLight.position, 'y').min(- 50).max(50).step(0.001).name('dLight Y')
+folder1.add(directionalLight.position, 'z').min(- 50).max(50).step(0.001).name('dLight Z')
+folder1.add(ambientLight, 'intensity').min(0).max(1).step(0.001).name('aLight intensity')
+folder1.add(directionalLight, 'intensity').min(0).max(1).step(0.001).name('dLight intensity')
 
 //Controls -- debug
 const controls = new OrbitControls(camera, canvas)
