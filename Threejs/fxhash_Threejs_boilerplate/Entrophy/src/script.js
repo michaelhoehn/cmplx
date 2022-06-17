@@ -18,6 +18,7 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
+scene.background = new THREE.Color('0xffffff') // add bg colors
 scene.add(helper)
 
 /**
@@ -50,7 +51,9 @@ scene.add(directionalLightCameraHelper)
 /**
  * Materials
  */
-const material = new THREE.MeshStandardMaterial()
+const material = new THREE.MeshStandardMaterial({
+    color: 'white'
+})
 material.roughness = 0.7
 
 /**
@@ -58,72 +61,62 @@ material.roughness = 0.7
  */
 
 const parameters = {}
-parameters.floorCount = 20
-parameters.slabWidthX = 2
-parameters.slabWidthY = 4
+parameters.floorCount = Math.floor(5 + fxrand() * 50)
+parameters.slabWidthX = Math.floor(2 + fxrand() * 8)
+parameters.slabWidthY = Math.floor(2 + fxrand() * 8)
 parameters.floorOffset = 0
-parameters.floorToFloorHeight= 0.25
-parameters.columnSpacing = 0.25
+parameters.floorToFloorHeight= 0.15 + fxrand() * 2
+parameters.columnSpacing = 0.05 + fxrand() * 0.5
 parameters.edgeOffset = parameters.slabWidthY/2 - parameters.columnSpacing
 parameters.widthX = parameters.slabWidthX - parameters.edgeOffset/4
 parameters.widthY = parameters.slabWidthY - parameters.edgeOffset/4
 parameters.countX = parameters.widthX / parameters.columnSpacing
 parameters.countY = parameters.widthY / parameters.columnSpacing
 
+let slabsArray = []
+
 const generateBuilding = () => {
     /**
      * Geometry 
      */
+    // Slab Init
+    const slabs = new THREE.Group()
+    const slabGeometry = new THREE.BoxGeometry(parameters.slabWidthX, 0.02, parameters.slabWidthY)
+    scene.add(slabs)
+
+    for(let i = 0; i < parameters.floorCount; i++){
+        const slab = new THREE.Mesh(
+            slabGeometry,
+            material
+        )
+        slab.position.set(0,parameters.floorOffset,0)
+        slabs.add(slab)
+        slab.castShadow = true
+        slab.receiveShadow = true
+        slabsArray.push(slab)
+        parameters.floorOffset+=parameters.floorToFloorHeight;
+    }
+
+    // Column Init
+    const testGeoGroup = new THREE.Group()
+    const testGeo = new THREE.BoxGeometry(0.01, parameters.floorToFloorHeight * parameters.floorCount, 0.01)
+    scene.add(testGeoGroup)
+
+    for(let x = 0; x <= parameters.countX; x++){
+        for(let y = 0; y <= parameters.countY; y++){
+            const testBox = new THREE.Mesh(testGeo, material)
+            const posX = (x/parameters.countX) * parameters.widthX - parameters.widthX / 2
+            const posY = (y/parameters.countY) * parameters.widthY - parameters.widthY / 2
+            testBox.position.set(posX, ((parameters.floorToFloorHeight * parameters.floorCount)/2) - parameters.floorToFloorHeight, posY)
+            testGeoGroup.add(testBox)
+            testBox.castShadow = true
+        }
+    }
 }
 
 generateBuilding()
 
-// Slab Parameters
-let floorCount = 20
-let slabWidthX = 2
-let slabWidthY = 4
-let floorOffset = 0
-let floorToFloorHeight = 0.25
-
-// Slab Init
-const slabs = new THREE.Group()
-const slabGeometry = new THREE.BoxGeometry(slabWidthX, 0.02, slabWidthY)
-scene.add(slabs)
-
-for(let i = 0; i < floorCount; i++){
-    const slab = new THREE.Mesh(
-        slabGeometry,
-        material
-    )
-    slab.position.set(0,floorOffset,0)
-    slabs.add(slab)
-    slab.castShadow = true
-    slab.receiveShadow = true
-    floorOffset+=floorToFloorHeight;
-}
-
-// Column Init
-const testGeoGroup = new THREE.Group()
-const testGeo = new THREE.BoxGeometry(0.01, floorToFloorHeight * floorCount, 0.01)
-scene.add(testGeoGroup)
-
-let columnSpacing = 0.25
-let edgeOffset = slabWidthY/2 - columnSpacing
-let widthX = slabWidthX - edgeOffset/4
-let widthY = slabWidthY - edgeOffset/4
-let countX = widthX / columnSpacing
-let countY = widthY / columnSpacing
-
-for(let x = 0; x <= countX; x++){
-    for(let y = 0; y <= countY; y++){
-        const testBox = new THREE.Mesh(testGeo, material)
-        const posX = (x/countX) * widthX - widthX / 2
-        const posY = (y/countY) * widthY - widthY / 2
-        testBox.position.set(posX, ((floorToFloorHeight * floorCount)/2) - floorToFloorHeight, posY)
-        testGeoGroup.add(testBox)
-        testBox.castShadow = true
-    }
-}
+console.log(slabsArray)
 
 /**
  * Sizes
@@ -153,13 +146,15 @@ window.addEventListener('resize', () =>
  */
 // Base camera
 const camera = new THREE.PerspectiveCamera(30, sizes.width / sizes.height, 0.1, 100)
-camera.position.x = 3.6
-camera.position.y = 0.5
-camera.position.z = 2.13
+camera.position.x = 4.5
+camera.position.y = 0.8
+camera.position.z = -7.5
 scene.add(camera)
 
 // Camera target
-// const camTarget = slabs[slabs.length - 1].position // this is always pointed to the top slab
+var targetIndex = Math.floor(fxrand() * slabsArray.length)
+
+const camTarget = slabsArray[targetIndex].position // this is always pointed to the top slab
 // may want to point at random slabs 
 // also need to shift the target away from the centre for composition purposes
 
@@ -168,10 +163,11 @@ const folder0 = gui.addFolder('Building Controls')
 const folder1 = gui.addFolder('Lighting Controls')
 const folder2 = gui.addFolder('Camera Controls')
 // camera controls
-folder2.add(camera.position, 'x').min(0).max(10).step(0.001).name('camX')
-folder2.add(camera.position, 'y').min(0).max(10).step(0.001).name('camY')
-folder2.add(camera.position, 'z').min(0).max(10).step(0.001).name('camZ')
+folder2.add(camera.position, 'x').min(-50).max(50).step(0.001).name('camX')
+folder2.add(camera.position, 'y').min(-50).max(50).step(0.001).name('camY')
+folder2.add(camera.position, 'z').min(-50).max(50).step(0.001).name('camZ')
 // building controls
+// folder0.add(parameters, 'floorCount').min(0).max(100).step(1).onFinishChange(generateBuilding)
 folder0.add(material, 'metalness').min(0).max(1).step(0.001)
 folder0.add(material, 'roughness').min(0).max(1).step(0.001)
 // lighting controls
@@ -183,6 +179,7 @@ folder1.add(directionalLight, 'intensity').min(0).max(1).step(0.001).name('dLigh
 
 //Controls -- debug
 const controls = new OrbitControls(camera, canvas)
+controls.enabled = false
 controls.enableDamping = true
 
 /**
@@ -210,11 +207,15 @@ const tick = () =>
     // sphere.position.z = 1 + Math.sin(elapsedTime)
     // sphere.position.y = Math.abs(Math.sin(elapsedTime * 3))
 
+    // camera.position.x = Math.cos(elapsedTime) * 10
+    // camera.position.z = Math.sin(elapsedTime) * 10
+    // camera.position.y = Math.sin(elapsedTime) * 1.5
+
     // Update camera
-    //camera.lookAt(camTarget)
+    camera.lookAt(camTarget)
 
     // Update controls
-    controls.update()
+    //controls.update()
 
     // Render
     renderer.render(scene, camera)

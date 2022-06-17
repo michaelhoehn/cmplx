@@ -18,6 +18,15 @@ npm run build
 ### All fxhash functionality was added by Michael Hoehn (cmplx)
 
 #### Development Todo
-Column placement should be responsive to the slab size
-Camera target is buggy and should be fixed prior to publication 
-ColumnX + Y tests - nested for loops
+Camera target needs adjusting / selection of a random focal point is nice, but still not sure if that's the best
+Camera position can be adjusted as well
+Camera FOV could be randomized
+Material color options
+Background color options
+Geometry wireframe option
+Add plants on slab edges (?)
+Perspective vs orthagonal camera still undecided 
+Shadow map quality improvements
+Post production - color halftone
+Rain system boolean
+Background textures on a plane
