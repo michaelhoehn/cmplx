@@ -9,12 +9,15 @@ import { Camera } from 'three'
  */
 // Debug
 const gui = new dat.GUI()
+const helper = new THREE.AxesHelper(5)
+
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
+scene.add(helper)
 
 /**
  * Lights
@@ -45,7 +48,7 @@ directionalLight.shadow.camera.far = 8
 // directionalLight.shadow.radius = 10
 
 const directionalLightCameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera)
-directionalLightCameraHelper.visible = true
+directionalLightCameraHelper.visible = false
 scene.add(directionalLightCameraHelper)
 
 /**
@@ -60,55 +63,53 @@ gui.add(material, 'roughness').min(0).max(1).step(0.001)
  * Objects
  */
 
-// floor slabs 
-let slabs = []
+// Slab Parameters
 let floorCount = 10
-let slabWidthX = 1
+let slabWidthX = 2
 let slabWidthY = 1
 let floorOffset = 0
 let floorToFloorHeight = 0.25
 
+// Slab Init
+const slabs = new THREE.Group()
+const slabGeometry = new THREE.BoxGeometry(slabWidthX, 0.02, slabWidthY)
+scene.add(slabs)
+
 for(let i = 0; i < floorCount; i++){
     const slab = new THREE.Mesh(
-        new THREE.BoxGeometry(slabWidthX, 0.02, slabWidthY),
+        slabGeometry,
         material
     )
     slab.position.set(0,floorOffset,0)
-    scene.add(slab)
-    slabs.push(slab);
+    slabs.add(slab)
     slab.castShadow = true
     slab.receiveShadow = true
     floorOffset+=floorToFloorHeight;
 }
 
-const plane = new THREE.Mesh(
-    new THREE.PlaneGeometry(5, 5),
-    material
-)
-plane.rotation.x = - Math.PI * 0.5
-plane.receiveShadow = true
-
-// column grids
-let columns = []
-let columnX = 5
+// Column Parameters
+let columnX = 10
 let columnY = 5
-let columnXSpacing = 0.2
+let columnXSpacing = 0.2 // this needs to be a calculation from the slab dimension
 let columnYSpacing = 0.2
 let placementOffset = 0
 let columnOffset = -slabWidthX/2 + placementOffset
 
+// Column Init
+const columns = new THREE.Group()
+const columnGeometry = new THREE.BoxGeometry(0.01, floorToFloorHeight * floorCount, 0.01)
+scene.add(columns)
+
 for(let i = 0; i < columnX; i++){
     const column = new THREE.Mesh(
-        new THREE.BoxGeometry(0.01, floorToFloorHeight * floorCount, 0.01),
-        material        
+        columnGeometry,
+        material   
     )
     column.position.set(columnOffset, ((floorToFloorHeight * floorCount)/2) - floorToFloorHeight, 0)
-    columns.push(column)
-    scene.add(column)
     columnOffset+=columnXSpacing
+    column.castShadow = true
+    columns.add(column)
 }
-
-//scene.add(plane)
 
 /**
  * Sizes
@@ -144,7 +145,7 @@ camera.position.z = 2.13
 scene.add(camera)
 
 // Camera target
-const camTarget = slabs[slabs.length - 1].position // this is always pointed to the top slab
+// const camTarget = slabs[slabs.length - 1].position // this is always pointed to the top slab
 // may want to point at random slabs 
 // also need to shift the target away from the centre for composition purposes
 
@@ -183,10 +184,10 @@ const tick = () =>
     // sphere.position.y = Math.abs(Math.sin(elapsedTime * 3))
 
     // Update camera
-    camera.lookAt(camTarget)
+    //camera.lookAt(camTarget)
 
     // Update controls
-    //controls.update()
+    controls.update()
 
     // Render
     renderer.render(scene, camera)

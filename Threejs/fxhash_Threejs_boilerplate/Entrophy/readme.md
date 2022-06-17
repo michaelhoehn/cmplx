@@ -16,3 +16,8 @@ npm run build
 ```
 ### Thank you to Bruno Simon at Threejs Journey for compiling basic threejs functionality 
 ### All fxhash functionality was added by Michael Hoehn (cmplx)
+
+#### Development Todo
+Column placement should be responsive to the slab size
+Camera target is buggy and should be fixed prior to publication 
+ColumnX + Y tests - nested for loops
