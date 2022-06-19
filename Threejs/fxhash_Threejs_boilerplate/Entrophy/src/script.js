@@ -2,6 +2,7 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui'
+import { Wrapping } from 'three'
 
 /**
  * Base
@@ -10,7 +11,6 @@ import * as dat from 'lil-gui'
 const gui = new dat.GUI()
 const helper = new THREE.AxesHelper(5)
 helper.visible = false
-
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -21,45 +21,69 @@ scene.background = new THREE.Color('0xffffff') // add bg colors
 scene.add(helper)
 
 /**
- * Lights
- */
-// Ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
-scene.add(ambientLight)
-
-// Directional light
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5)
-directionalLight.position.set(25, 8, 4)
-scene.add(directionalLight)
-directionalLight.castShadow = true
-
-directionalLight.shadow.mapSize.width = 2048
-directionalLight.shadow.mapSize.height = 2048
-directionalLight.shadow.camera.top = 10
-directionalLight.shadow.camera.bottom = -10
-directionalLight.shadow.camera.right = 10
-directionalLight.shadow.camera.left = -10
-directionalLight.shadow.camera.near = 1
-directionalLight.shadow.camera.far = 50
-// directionalLight.shadow.radius = 10
-
-const directionalLightCameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera)
-directionalLightCameraHelper.visible = false
-scene.add(directionalLightCameraHelper)
-
-/**
  * Materials
  */
-const material = new THREE.MeshStandardMaterial({
-    color: 'white'
+
+// Textures 
+const textureLoader = new THREE.TextureLoader()
+const slabColorTexture = textureLoader.load('/textures/color.jpg')
+const slabAOTexture = textureLoader.load('/textures/ao.jpg')
+const slabNormalTexture = textureLoader.load('/textures/normal.jpg')
+const slabRoughnessTexture = textureLoader.load('/textures/roughness.jpg')
+const columnColorTexture = textureLoader.load('/textures/color.jpg')
+const columnAOTexture = textureLoader.load('/textures/ao.jpg')
+const columnNormalTexture = textureLoader.load('/textures/normal.jpg')
+const columnRoughnessTexture = textureLoader.load('/textures/roughness.jpg')
+
+// Slab Material
+const slabMaterial = new THREE.MeshStandardMaterial({
+    map: slabColorTexture,
+    aoMap: slabAOTexture,
+    normalMap: slabNormalTexture,
+    roughnessMap: slabRoughnessTexture
 })
-material.roughness = 0.7
+
+// UV Mapping
+slabColorTexture.wrapS = THREE.RepeatWrapping
+slabColorTexture.wrapT = THREE.RepeatWrapping
+slabColorTexture.repeat.set(12,12)
+slabAOTexture.wrapS = THREE.RepeatWrapping
+slabAOTexture.wrapT = THREE.RepeatWrapping
+slabAOTexture.repeat.set(12,12)
+slabNormalTexture.wrapS = THREE.RepeatWrapping
+slabNormalTexture.wrapT = THREE.RepeatWrapping
+slabNormalTexture.repeat.set(12,12)
+slabRoughnessTexture.wrapS = THREE.RepeatWrapping
+slabRoughnessTexture.wrapT = THREE.RepeatWrapping
+slabRoughnessTexture.repeat.set(12,12)
+
+// Column Material
+const columnMaterial = new THREE.MeshStandardMaterial({
+    map: columnColorTexture,
+    aoMap: columnAOTexture,
+    normalMap: columnNormalTexture,
+    roughnessMap: columnRoughnessTexture
+})
+
+// UV Mapping
+columnColorTexture.wrapS = THREE.RepeatWrapping
+columnColorTexture.wrapT = THREE.RepeatWrapping
+columnColorTexture.repeat.set(10,2)
+columnAOTexture.wrapS = THREE.RepeatWrapping
+columnAOTexture.wrapT = THREE.RepeatWrapping
+columnAOTexture.repeat.set(10,2)
+columnNormalTexture.wrapS = THREE.RepeatWrapping
+columnNormalTexture.wrapT = THREE.RepeatWrapping
+columnNormalTexture.repeat.set(10,2)
+columnRoughnessTexture.wrapS = THREE.RepeatWrapping
+columnRoughnessTexture.wrapT = THREE.RepeatWrapping
+columnRoughnessTexture.repeat.set(10,2)
 
 /**
  * Objects
  */
 const groundPlaneGeo = new THREE.PlaneGeometry(50,50,50)
-const groundPlaneMesh = new THREE.Mesh(groundPlaneGeo, material)
+const groundPlaneMesh = new THREE.Mesh(groundPlaneGeo, slabMaterial)
 groundPlaneMesh.rotation.x = - Math.PI * 0.5
 groundPlaneMesh.position.y = - 0.5
 groundPlaneMesh.receiveShadow = true
@@ -87,14 +111,15 @@ const generateBuilding = () => {
      */
     // Slab Init
     const slabs = new THREE.Group()
-    const slabGeometry = new THREE.BoxGeometry(parameters.slabWidthX, 0.03, parameters.slabWidthY)
+    const slabGeometry = new THREE.BoxGeometry(parameters.slabWidthX, 0.03, parameters.slabWidthY, 128, 128, 128)
     scene.add(slabs)
 
     for(let i = 0; i < parameters.floorCount; i++){
         const slab = new THREE.Mesh(
             slabGeometry,
-            material
+            slabMaterial
         )
+        slab.geometry.setAttribute('uv2', new THREE.BufferAttribute(slab.geometry.attributes.uv.array,2))
         slab.position.set(0,parameters.floorOffset,0)
         slabs.add(slab)
         slab.castShadow = true
@@ -105,12 +130,13 @@ const generateBuilding = () => {
 
     // Column Init
     const testGeoGroup = new THREE.Group()
-    const testGeo = new THREE.BoxGeometry(0.05, parameters.floorToFloorHeight * parameters.floorCount, 0.05)
+    const testGeo = new THREE.BoxGeometry(0.05, parameters.floorToFloorHeight * parameters.floorCount, 0.05, 128, 128, 128)
     scene.add(testGeoGroup)
 
     for(let x = 0; x <= parameters.countX; x++){
         for(let y = 0; y <= parameters.countY; y++){
-            const testBox = new THREE.Mesh(testGeo, material)
+            const testBox = new THREE.Mesh(testGeo, columnMaterial)
+            testBox.geometry.setAttribute('uv2', new THREE.BufferAttribute(testBox.geometry.attributes.uv.array,2))
             const posX = (x/parameters.countX) * parameters.widthX - parameters.widthX / 2
             const posY = (y/parameters.countY) * parameters.widthY - parameters.widthY / 2
             testBox.position.set(posX, ((parameters.floorToFloorHeight * parameters.floorCount)/2) - parameters.floorToFloorHeight, posY)
@@ -165,11 +191,14 @@ var keyTarget = fxrand()
 var targetXShift
 var targetYShift = 2
 var targetZShift = 0
+var dLightZPos
 
 if(keyTarget <= 0.5) {
-    targetXShift = 2
+    targetXShift = 2,
+    dLightZPos = 4
 } else {
-    targetXShift = -2
+    targetXShift = -2,
+    dLightZPos = -100
 }
 
 const camTargetX = slabsArray[targetIndex].position.x + targetXShift
@@ -177,8 +206,38 @@ const camTargetY = slabsArray[targetIndex].position.y + targetYShift
 const camTargetZ = slabsArray[targetIndex].position.z + targetZShift
 const camTargetVector = new THREE.Vector3(camTargetX,camTargetY,camTargetZ)
 
-// target debug
-console.log(camTargetX)
+/**
+ * Lights
+ */
+// Ambient light
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.75)
+scene.add(ambientLight)
+
+// Directional light
+var dLightXPos = 25
+var dLightYPos = 8
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.75)
+directionalLight.position.set(dLightXPos, dLightYPos, dLightZPos)
+scene.add(directionalLight)
+directionalLight.castShadow = true
+
+directionalLight.shadow.mapSize.width = 2048
+directionalLight.shadow.mapSize.height = 2048
+directionalLight.shadow.camera.top = 10
+directionalLight.shadow.camera.bottom = -10
+directionalLight.shadow.camera.right = 10
+directionalLight.shadow.camera.left = -10
+directionalLight.shadow.camera.near = 1
+directionalLight.shadow.camera.far = 50
+// directionalLight.shadow.radius = 10
+
+const directionalLightCameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera)
+directionalLightCameraHelper.visible = false
+scene.add(directionalLightCameraHelper)
+
+// // target debug
+// console.log(camTargetX)
 
 // GUI Controls
 const folder0 = gui.addFolder('Building Controls')
@@ -194,12 +253,14 @@ folder2.add(camTargetVector, 'z').min(-50).max(50).step(0.001).name('targetZ')
 
 // building controls
 // folder0.add(parameters, 'floorCount').min(0).max(100).step(1).onFinishChange(generateBuilding)
-folder0.add(material, 'metalness').min(0).max(1).step(0.001)
-folder0.add(material, 'roughness').min(0).max(1).step(0.001)
+folder0.add(slabMaterial, 'metalness').min(0).max(1).step(0.001)
+folder0.add(slabMaterial, 'roughness').min(0).max(1).step(0.001)
+//folder0.add(slabMaterial, 'normalScale').min(0).max(1).step(0.0001)
+//folder0.add(slabMaterial, 'displacementScale').min(0).max(1).step(0.0001)
 // lighting controls
 folder1.add(directionalLight.position, 'x').min(- 50).max(50).step(0.001).name('dLight X')
 folder1.add(directionalLight.position, 'y').min(- 50).max(50).step(0.001).name('dLight Y')
-folder1.add(directionalLight.position, 'z').min(- 50).max(50).step(0.001).name('dLight Z')
+folder1.add(directionalLight.position, 'z').min(- 200).max(50).step(0.001).name('dLight Z')
 folder1.add(ambientLight, 'intensity').min(0).max(1).step(0.001).name('aLight intensity')
 folder1.add(directionalLight, 'intensity').min(0).max(1).step(0.001).name('dLight intensity')
 
