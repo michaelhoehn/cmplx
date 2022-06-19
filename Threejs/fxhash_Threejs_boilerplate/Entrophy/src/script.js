@@ -1,8 +1,13 @@
 import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
+import { HalftonePass } from 'three/examples/jsm/postprocessing/HalftonePass'
 import * as dat from 'lil-gui'
 import { Wrapping } from 'three'
+
+let composer, group
 
 /**
  * Base
@@ -47,6 +52,7 @@ const slabMaterial = new THREE.MeshStandardMaterial({
 slabColorTexture.wrapS = THREE.RepeatWrapping
 slabColorTexture.wrapT = THREE.RepeatWrapping
 slabColorTexture.repeat.set(12,12)
+slabColorTexture.minFilter = THREE.NearestFilter
 slabAOTexture.wrapS = THREE.RepeatWrapping
 slabAOTexture.wrapT = THREE.RepeatWrapping
 slabAOTexture.repeat.set(12,12)
@@ -69,6 +75,7 @@ const columnMaterial = new THREE.MeshStandardMaterial({
 columnColorTexture.wrapS = THREE.RepeatWrapping
 columnColorTexture.wrapT = THREE.RepeatWrapping
 columnColorTexture.repeat.set(10,2)
+columnColorTexture.minFilter = THREE.NearestFilter
 columnAOTexture.wrapS = THREE.RepeatWrapping
 columnAOTexture.wrapT = THREE.RepeatWrapping
 columnAOTexture.repeat.set(10,2)
@@ -78,6 +85,38 @@ columnNormalTexture.repeat.set(10,2)
 columnRoughnessTexture.wrapS = THREE.RepeatWrapping
 columnRoughnessTexture.wrapT = THREE.RepeatWrapping
 columnRoughnessTexture.repeat.set(10,2)
+
+// Halftone post processing render requires a custom shader
+// since this is just a test, please replace the shader materials with the textures
+const mat = new THREE.ShaderMaterial( {
+
+    uniforms: {},
+
+    vertexShader: [
+        'varying vec2 vUV;',
+        'varying vec3 vNormal;',
+
+        'void main() {',
+
+        'vUV = uv;',
+        'vNormal = vec3( normal );',
+        'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+
+        '}'
+    ].join( '\n' ),
+
+    fragmentShader: [
+        'varying vec2 vUV;',
+        'varying vec3 vNormal;',
+
+        'void main() {',
+
+        'vec4 c = vec4( abs( vNormal ) + vec3( vUV, 0.0 ), 0.0 );',
+        'gl_FragColor = c;',
+
+        '}'
+    ].join( '\n' )
+} );
 
 /**
  * Objects
