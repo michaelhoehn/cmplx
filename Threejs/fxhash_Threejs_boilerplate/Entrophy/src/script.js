@@ -2,7 +2,6 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui'
-import { Camera, TetrahedronBufferGeometry } from 'three'
 
 /**
  * Base
@@ -59,14 +58,21 @@ material.roughness = 0.7
 /**
  * Objects
  */
+const groundPlaneGeo = new THREE.PlaneGeometry(50,50,50)
+const groundPlaneMesh = new THREE.Mesh(groundPlaneGeo, material)
+groundPlaneMesh.rotation.x = - Math.PI * 0.5
+groundPlaneMesh.position.y = - 0.5
+groundPlaneMesh.receiveShadow = true
+scene.add(groundPlaneMesh)
+
 
 const parameters = {}
-parameters.floorCount = Math.floor(5 + fxrand() * 50)
-parameters.slabWidthX = Math.floor(2 + fxrand() * 8)
-parameters.slabWidthY = Math.floor(2 + fxrand() * 8)
+parameters.floorCount = Math.floor(5 + fxrand() * 25)
+parameters.slabWidthX = Math.floor(2 + fxrand() * 5)
+parameters.slabWidthY = Math.floor(2 + fxrand() * 5)
 parameters.floorOffset = 0
 parameters.floorToFloorHeight= 0.15 + fxrand() * 2
-parameters.columnSpacing = 0.05 + fxrand() * 0.5
+parameters.columnSpacing = 0.3 + fxrand() * 0.85
 parameters.edgeOffset = parameters.slabWidthY/2 - parameters.columnSpacing
 parameters.widthX = parameters.slabWidthX - parameters.edgeOffset/4
 parameters.widthY = parameters.slabWidthY - parameters.edgeOffset/4
@@ -81,7 +87,7 @@ const generateBuilding = () => {
      */
     // Slab Init
     const slabs = new THREE.Group()
-    const slabGeometry = new THREE.BoxGeometry(parameters.slabWidthX, 0.02, parameters.slabWidthY)
+    const slabGeometry = new THREE.BoxGeometry(parameters.slabWidthX, 0.03, parameters.slabWidthY)
     scene.add(slabs)
 
     for(let i = 0; i < parameters.floorCount; i++){
@@ -99,7 +105,7 @@ const generateBuilding = () => {
 
     // Column Init
     const testGeoGroup = new THREE.Group()
-    const testGeo = new THREE.BoxGeometry(0.01, parameters.floorToFloorHeight * parameters.floorCount, 0.01)
+    const testGeo = new THREE.BoxGeometry(0.05, parameters.floorToFloorHeight * parameters.floorCount, 0.05)
     scene.add(testGeoGroup)
 
     for(let x = 0; x <= parameters.countX; x++){
@@ -145,18 +151,34 @@ window.addEventListener('resize', () =>
  * Camera
  */
 // Base camera
-const camera = new THREE.PerspectiveCamera(30, sizes.width / sizes.height, 0.1, 100)
+// Camera target
+var targetIndex = Math.floor(fxrand() * (slabsArray.length - 2))
+
+const camera = new THREE.PerspectiveCamera(20, sizes.width / sizes.height, 0.1, 100)
 camera.position.x = 4.5
-camera.position.y = 0.8
+camera.position.y = slabsArray[targetIndex].position.y
 camera.position.z = -7.5
 scene.add(camera)
 
-// Camera target
-var targetIndex = Math.floor(fxrand() * slabsArray.length)
+// function to decide which side the camera will target
+var keyTarget = fxrand()
+var targetXShift
+var targetYShift = 2
+var targetZShift = 0
 
-const camTarget = slabsArray[targetIndex].position // this is always pointed to the top slab
-// may want to point at random slabs 
-// also need to shift the target away from the centre for composition purposes
+if(keyTarget <= 0.5) {
+    targetXShift = 2
+} else {
+    targetXShift = -2
+}
+
+const camTargetX = slabsArray[targetIndex].position.x + targetXShift
+const camTargetY = slabsArray[targetIndex].position.y + targetYShift
+const camTargetZ = slabsArray[targetIndex].position.z + targetZShift
+const camTargetVector = new THREE.Vector3(camTargetX,camTargetY,camTargetZ)
+
+// target debug
+console.log(camTargetX)
 
 // GUI Controls
 const folder0 = gui.addFolder('Building Controls')
@@ -166,6 +188,10 @@ const folder2 = gui.addFolder('Camera Controls')
 folder2.add(camera.position, 'x').min(-50).max(50).step(0.001).name('camX')
 folder2.add(camera.position, 'y').min(-50).max(50).step(0.001).name('camY')
 folder2.add(camera.position, 'z').min(-50).max(50).step(0.001).name('camZ')
+folder2.add(camTargetVector, 'x').min(-50).max(50).step(0.001).name('targetX')
+folder2.add(camTargetVector, 'y').min(-50).max(50).step(0.001).name('targetY')
+folder2.add(camTargetVector, 'z').min(-50).max(50).step(0.001).name('targetZ')
+
 // building controls
 // folder0.add(parameters, 'floorCount').min(0).max(100).step(1).onFinishChange(generateBuilding)
 folder0.add(material, 'metalness').min(0).max(1).step(0.001)
@@ -186,7 +212,8 @@ controls.enableDamping = true
  * Renderer
  */
 const renderer = new THREE.WebGLRenderer({
-    canvas: canvas
+    canvas: canvas,
+    antialias: true
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -212,7 +239,7 @@ const tick = () =>
     // camera.position.y = Math.sin(elapsedTime) * 1.5
 
     // Update camera
-    camera.lookAt(camTarget)
+    camera.lookAt(camTargetVector)
 
     // Update controls
     //controls.update()
