@@ -39,8 +39,20 @@
         }
         //---- /do not edit the following code
     </script>
+    <style>
+        #p5Div, #threejsDiv {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #p5Div {
+            z-index: 1;
+        }
+    </style>
 </head>
 <body>
     <canvas class="webgl"></canvas>
+    <div id='p5Div'></div>
+    <div id='threejsDiv'></div>
 </body>
 </html>

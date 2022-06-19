@@ -17,6 +17,7 @@
     "html-webpack-plugin": "^5.5.0",
     "lil-gui": "^0.16.1",
     "mini-css-extract-plugin": "^2.6.0",
+    "p5": "^1.4.1",
     "portfinder-sync": "0.0.2",
     "raw-loader": "^4.0.2",
     "style-loader": "^3.3.1",

@@ -1,19 +1,40 @@
 import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
-import { HalftonePass } from 'three/examples/jsm/postprocessing/HalftonePass'
 import * as dat from 'lil-gui'
-import { Wrapping } from 'three'
+import p5, * as P5 from 'p5'
 
-let composer, group
+/**
+ * Sizes
+ */
+ const sizes = {
+    width: window.innerWidth,
+    height: window.innerHeight
+}
+
+const sketch = (s) => {
+    s.setup = () => {
+        var canVas = s.createCanvas(sizes.width, sizes.height);
+        canVas.parent('p5Div')
+    }
+    s.draw = () => {
+        s.noFill()
+        s.stroke('white')
+        s.strokeWeight(100)
+        s.rect(0,0,sizes.width, sizes.height)
+    }
+}
+
+const sketchInstance = () => {
+    new p5(sketch, 'p5Div')
+}
+sketchInstance()
 
 /**
  * Base
  */
 // Debug
-const gui = new dat.GUI()
+//const gui = new dat.GUI()
 const helper = new THREE.AxesHelper(5)
 helper.visible = false
 
@@ -22,7 +43,7 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
-scene.background = new THREE.Color('0xffffff') // add bg colors
+scene.background = new THREE.Color('pink') // add bg colors
 scene.add(helper)
 
 /**
@@ -85,38 +106,6 @@ columnNormalTexture.repeat.set(10,2)
 columnRoughnessTexture.wrapS = THREE.RepeatWrapping
 columnRoughnessTexture.wrapT = THREE.RepeatWrapping
 columnRoughnessTexture.repeat.set(10,2)
-
-// Halftone post processing render requires a custom shader
-// since this is just a test, please replace the shader materials with the textures
-const mat = new THREE.ShaderMaterial( {
-
-    uniforms: {},
-
-    vertexShader: [
-        'varying vec2 vUV;',
-        'varying vec3 vNormal;',
-
-        'void main() {',
-
-        'vUV = uv;',
-        'vNormal = vec3( normal );',
-        'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
-
-        '}'
-    ].join( '\n' ),
-
-    fragmentShader: [
-        'varying vec2 vUV;',
-        'varying vec3 vNormal;',
-
-        'void main() {',
-
-        'vec4 c = vec4( abs( vNormal ) + vec3( vUV, 0.0 ), 0.0 );',
-        'gl_FragColor = c;',
-
-        '}'
-    ].join( '\n' )
-} );
 
 /**
  * Objects
@@ -186,16 +175,6 @@ const generateBuilding = () => {
 }
 
 generateBuilding()
-
-console.log(slabsArray)
-
-/**
- * Sizes
- */
-const sizes = {
-    width: window.innerWidth,
-    height: window.innerHeight
-}
 
 window.addEventListener('resize', () =>
 {
@@ -278,30 +257,30 @@ scene.add(directionalLightCameraHelper)
 // // target debug
 // console.log(camTargetX)
 
-// GUI Controls
-const folder0 = gui.addFolder('Building Controls')
-const folder1 = gui.addFolder('Lighting Controls')
-const folder2 = gui.addFolder('Camera Controls')
-// camera controls
-folder2.add(camera.position, 'x').min(-50).max(50).step(0.001).name('camX')
-folder2.add(camera.position, 'y').min(-50).max(50).step(0.001).name('camY')
-folder2.add(camera.position, 'z').min(-50).max(50).step(0.001).name('camZ')
-folder2.add(camTargetVector, 'x').min(-50).max(50).step(0.001).name('targetX')
-folder2.add(camTargetVector, 'y').min(-50).max(50).step(0.001).name('targetY')
-folder2.add(camTargetVector, 'z').min(-50).max(50).step(0.001).name('targetZ')
+// // GUI Controls
+// const folder0 = gui.addFolder('Building Controls')
+// const folder1 = gui.addFolder('Lighting Controls')
+// const folder2 = gui.addFolder('Camera Controls')
+// // camera controls
+// folder2.add(camera.position, 'x').min(-50).max(50).step(0.001).name('camX')
+// folder2.add(camera.position, 'y').min(-50).max(50).step(0.001).name('camY')
+// folder2.add(camera.position, 'z').min(-50).max(50).step(0.001).name('camZ')
+// folder2.add(camTargetVector, 'x').min(-50).max(50).step(0.001).name('targetX')
+// folder2.add(camTargetVector, 'y').min(-50).max(50).step(0.001).name('targetY')
+// folder2.add(camTargetVector, 'z').min(-50).max(50).step(0.001).name('targetZ')
 
-// building controls
-// folder0.add(parameters, 'floorCount').min(0).max(100).step(1).onFinishChange(generateBuilding)
-folder0.add(slabMaterial, 'metalness').min(0).max(1).step(0.001)
-folder0.add(slabMaterial, 'roughness').min(0).max(1).step(0.001)
-//folder0.add(slabMaterial, 'normalScale').min(0).max(1).step(0.0001)
-//folder0.add(slabMaterial, 'displacementScale').min(0).max(1).step(0.0001)
-// lighting controls
-folder1.add(directionalLight.position, 'x').min(- 50).max(50).step(0.001).name('dLight X')
-folder1.add(directionalLight.position, 'y').min(- 50).max(50).step(0.001).name('dLight Y')
-folder1.add(directionalLight.position, 'z').min(- 200).max(50).step(0.001).name('dLight Z')
-folder1.add(ambientLight, 'intensity').min(0).max(1).step(0.001).name('aLight intensity')
-folder1.add(directionalLight, 'intensity').min(0).max(1).step(0.001).name('dLight intensity')
+// // building controls
+// // folder0.add(parameters, 'floorCount').min(0).max(100).step(1).onFinishChange(generateBuilding)
+// folder0.add(slabMaterial, 'metalness').min(0).max(1).step(0.001)
+// folder0.add(slabMaterial, 'roughness').min(0).max(1).step(0.001)
+// //folder0.add(slabMaterial, 'normalScale').min(0).max(1).step(0.0001)
+// //folder0.add(slabMaterial, 'displacementScale').min(0).max(1).step(0.0001)
+// // lighting controls
+// folder1.add(directionalLight.position, 'x').min(- 50).max(50).step(0.001).name('dLight X')
+// folder1.add(directionalLight.position, 'y').min(- 50).max(50).step(0.001).name('dLight Y')
+// folder1.add(directionalLight.position, 'z').min(- 200).max(50).step(0.001).name('dLight Z')
+// folder1.add(ambientLight, 'intensity').min(0).max(1).step(0.001).name('aLight intensity')
+// folder1.add(directionalLight, 'intensity').min(0).max(1).step(0.001).name('dLight intensity')
 
 //Controls -- debug
 const controls = new OrbitControls(camera, canvas)
@@ -319,6 +298,7 @@ renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.shadowMap.enabled = true // enable for shadows ;) 
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
+document.body.appendChild(renderer.domElement)
 
 /**
  * Animate
