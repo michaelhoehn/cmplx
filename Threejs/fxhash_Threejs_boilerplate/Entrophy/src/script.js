@@ -6,6 +6,7 @@ import p5, * as P5 from 'p5'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { HalftonePass } from 'three/examples/jsm/postprocessing/HalftonePass.js'
+import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
 
 /**
  * Sizes
@@ -15,23 +16,23 @@ import { HalftonePass } from 'three/examples/jsm/postprocessing/HalftonePass.js'
     height: window.innerHeight
 }
 
-const sketch = (s) => {
-    s.setup = () => {
-        var canVas = s.createCanvas(sizes.width, sizes.height);
-        canVas.parent('p5Div')
-    }
-    s.draw = () => {
-        s.noFill()
-        s.stroke('white')
-        s.strokeWeight(100)
-        s.rect(0,0,sizes.width, sizes.height)
-    }
-}
+// const sketch = (s) => {
+//     s.setup = () => {
+//         var canVas = s.createCanvas(sizes.width, sizes.height);
+//         canVas.parent('p5Div')
+//     }
+//     s.draw = () => {
+//         s.noFill()
+//         s.stroke('white')
+//         s.strokeWeight(100)
+//         s.rect(0,0,sizes.width, sizes.height)
+//     }
+// }
 
-const sketchInstance = () => {
-    new p5(sketch, 'p5Div')
-}
-sketchInstance()
+// const sketchInstance = () => {
+//     new p5(sketch, 'p5Div')
+// }
+// sketchInstance()
 
 /**
  * Base
@@ -89,22 +90,23 @@ const slabMaterial = new THREE.MeshStandardMaterial({
     aoMap: slabAOTexture,
     normalMap: slabNormalTexture,
     roughnessMap: slabRoughnessTexture
+    //wireframe: true
 })
 
 // UV Mapping
 slabColorTexture.wrapS = THREE.RepeatWrapping
 slabColorTexture.wrapT = THREE.RepeatWrapping
-slabColorTexture.repeat.set(12,12)
+slabColorTexture.repeat.set(10,5)
 slabColorTexture.minFilter = THREE.NearestFilter
 slabAOTexture.wrapS = THREE.RepeatWrapping
 slabAOTexture.wrapT = THREE.RepeatWrapping
-slabAOTexture.repeat.set(12,12)
+slabAOTexture.repeat.set(10,5)
 slabNormalTexture.wrapS = THREE.RepeatWrapping
 slabNormalTexture.wrapT = THREE.RepeatWrapping
-slabNormalTexture.repeat.set(12,12)
+slabNormalTexture.repeat.set(10,5)
 slabRoughnessTexture.wrapS = THREE.RepeatWrapping
 slabRoughnessTexture.wrapT = THREE.RepeatWrapping
-slabRoughnessTexture.repeat.set(12,12)
+slabRoughnessTexture.repeat.set(10,5)
 
 // Column Material
 const columnMaterial = new THREE.MeshStandardMaterial({
@@ -117,29 +119,31 @@ const columnMaterial = new THREE.MeshStandardMaterial({
 // UV Mapping
 columnColorTexture.wrapS = THREE.RepeatWrapping
 columnColorTexture.wrapT = THREE.RepeatWrapping
-columnColorTexture.repeat.set(10,2)
+columnColorTexture.repeat.set(2,10)
 columnColorTexture.minFilter = THREE.NearestFilter
 columnAOTexture.wrapS = THREE.RepeatWrapping
 columnAOTexture.wrapT = THREE.RepeatWrapping
-columnAOTexture.repeat.set(10,2)
+columnAOTexture.repeat.set(2,10)
 columnNormalTexture.wrapS = THREE.RepeatWrapping
 columnNormalTexture.wrapT = THREE.RepeatWrapping
-columnNormalTexture.repeat.set(10,2)
+columnNormalTexture.repeat.set(2,10)
 columnRoughnessTexture.wrapS = THREE.RepeatWrapping
 columnRoughnessTexture.wrapT = THREE.RepeatWrapping
-columnRoughnessTexture.repeat.set(10,2)
+columnRoughnessTexture.repeat.set(2,10)
 
 /**
  * Objects
  */
+
+// Ground Plane
 const groundPlaneGeo = new THREE.PlaneGeometry(50,50,50)
 const groundPlaneMesh = new THREE.Mesh(groundPlaneGeo, slabMaterial)
 groundPlaneMesh.rotation.x = - Math.PI * 0.5
 groundPlaneMesh.position.y = - 0.5
 groundPlaneMesh.receiveShadow = true
-scene.add(groundPlaneMesh)
+//scene.add(groundPlaneMesh)
 
-
+// Building Generator
 const parameters = {}
 parameters.floorCount = Math.floor(5 + fxrand() * 25)
 parameters.slabWidthX = Math.floor(2 + fxrand() * 5)
@@ -161,7 +165,7 @@ const generateBuilding = () => {
      */
     // Slab Init
     const slabs = new THREE.Group()
-    const slabGeometry = new THREE.BoxGeometry(parameters.slabWidthX, 0.03, parameters.slabWidthY, 128, 128, 128)
+    const slabGeometry = new THREE.BoxGeometry(parameters.slabWidthX, 0.03, parameters.slabWidthY, 4,1,4)
     scene.add(slabs)
 
     for(let i = 0; i < parameters.floorCount; i++){
@@ -179,39 +183,36 @@ const generateBuilding = () => {
     }
 
     // Column Init
-    const testGeoGroup = new THREE.Group()
-    const testGeo = new THREE.BoxGeometry(0.05, parameters.floorToFloorHeight * parameters.floorCount, 0.05, 128, 128, 128)
-    scene.add(testGeoGroup)
+    const columnGroup = new THREE.Group()
+    const columnGeo = new THREE.BoxGeometry(0.05, parameters.floorToFloorHeight * parameters.floorCount, 0.05, 4,1,4)
+    scene.add(columnGroup)
 
     for(let x = 0; x <= parameters.countX; x++){
         for(let y = 0; y <= parameters.countY; y++){
-            const testBox = new THREE.Mesh(testGeo, columnMaterial)
-            testBox.geometry.setAttribute('uv2', new THREE.BufferAttribute(testBox.geometry.attributes.uv.array,2))
+            const columns = new THREE.Mesh(columnGeo, columnMaterial)
+            columns.geometry.setAttribute('uv2', new THREE.BufferAttribute(columns.geometry.attributes.uv.array,2))
             const posX = (x/parameters.countX) * parameters.widthX - parameters.widthX / 2
             const posY = (y/parameters.countY) * parameters.widthY - parameters.widthY / 2
-            testBox.position.set(posX, ((parameters.floorToFloorHeight * parameters.floorCount)/2) - parameters.floorToFloorHeight, posY)
-            testGeoGroup.add(testBox)
-            testBox.castShadow = true
+            columns.position.set(posX, ((parameters.floorToFloorHeight * parameters.floorCount)/2) - parameters.floorToFloorHeight, posY)
+            columnGroup.add(columns)
+            columns.castShadow = true
         }
     }
 }
 
 generateBuilding()
 
-window.addEventListener('resize', () =>
-{
-    // Update sizes
-    sizes.width = window.innerWidth
-    sizes.height = window.innerHeight
+// Entropy
+console.log(slabsArray[0].geometry)
+const lineMat = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+const points = [];
+points.push( new THREE.Vector3( 0, 0, 0 ) );
+points.push( new THREE.Vector3( 0, 10, 0 ) );
+points.push( new THREE.Vector3( 10, 0, 0 ) );
 
-    // Update camera
-    camera.aspect = sizes.width / sizes.height
-    camera.updateProjectionMatrix()
-
-    // Update renderer
-    renderer.setSize(sizes.width, sizes.height)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-})
+const geometry = new THREE.BufferGeometry().setFromPoints( points );
+const line = new THREE.Line( geometry, lineMat );
+scene.add( line );
 
 /**
  * Camera
@@ -311,7 +312,7 @@ folder1.add(directionalLight, 'intensity').min(0).max(1).step(0.001).name('dLigh
 
 //Controls -- debug
 const controls = new OrbitControls(camera, canvas)
-controls.enabled = false
+controls.enabled = true
 controls.enableDamping = true
 
 /**
@@ -344,7 +345,7 @@ const params = {
     blending: 1,
     blendingMode: 1,
     greyscale: false,
-    disable: false
+    disable: true
 }
 
 const halftonePass = new HalftonePass( sizes.width, sizes.height, params)
@@ -376,6 +377,9 @@ function onGUIChange() {
     halftonePass.uniforms[ 'disable' ].value = controller.disable;
 }
 
+const smaaPass = new SMAAPass()
+effectComposer.addPass(smaaPass)
+
 folder3.add( controller, 'shape', { 'Dot': 1, 'Ellipse': 2, 'Line': 3, 'Square': 4 } ).onChange( onGUIChange );
 folder3.add( controller, 'radius', 1, 25 ).onChange( onGUIChange );
 folder3.add( controller, 'rotateR', 0, 90 ).onChange( onGUIChange );
@@ -386,6 +390,25 @@ folder3.add( controller, 'greyscale' ).onChange( onGUIChange );
 folder3.add( controller, 'blending', 0, 1, 0.01 ).onChange( onGUIChange );
 folder3.add( controller, 'blendingMode', { 'Linear': 1, 'Multiply': 2, 'Add': 3, 'Lighter': 4, 'Darker': 5 } ).onChange( onGUIChange );
 folder3.add( controller, 'disable' ).onChange( onGUIChange );
+
+/**
+ * On Resize Event
+ */
+ window.addEventListener('resize', () =>
+ {
+     // Update sizes
+     sizes.width = window.innerWidth
+     sizes.height = window.innerHeight
+ 
+     // Update camera
+     camera.aspect = sizes.width / sizes.height
+     camera.updateProjectionMatrix()
+ 
+     // Update renderer
+     renderer.setSize(sizes.width, sizes.height)
+     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+ })
+
 
 /**
  * Animate
@@ -409,7 +432,7 @@ const tick = () =>
     camera.lookAt(camTargetVector)
 
     // Update controls
-    //controls.update()
+    controls.update()
 
     // Render
     //renderer.render(scene, camera)
