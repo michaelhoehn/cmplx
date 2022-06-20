@@ -3,6 +3,9 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui'
 import p5, * as P5 from 'p5'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import { HalftonePass } from 'three/examples/jsm/postprocessing/HalftonePass.js'
 
 /**
  * Sizes
@@ -34,7 +37,7 @@ sketchInstance()
  * Base
  */
 // Debug
-//const gui = new dat.GUI()
+const gui = new dat.GUI()
 const helper = new THREE.AxesHelper(5)
 helper.visible = false
 
@@ -42,9 +45,28 @@ helper.visible = false
 const canvas = document.querySelector('canvas.webgl')
 
 // Scene
+
+// Random background color
+var bgColor = fxrand()
+var bgColorArray = ['red', 'black', 'white', 'pink', 'lightblue']
+
+if(bgColor >= 0.8){
+    bgColorArray = bgColorArray[0]
+} else if (bgColor < 0.8 && bgColor >= 0.6) {
+    bgColorArray = bgColorArray[1]
+} else if (bgColor < 0.6 && bgColor >= 0.4) {
+    bgColorArray = bgColorArray[2]
+} else if (bgColor < 0.4 && bgColor >= 0.2) {
+    bgColorArray = bgColorArray[3]
+} else {
+    bgColorArray = bgColorArray[4]
+}
+
 const scene = new THREE.Scene()
-scene.background = new THREE.Color('pink') // add bg colors
+scene.background = new THREE.Color(bgColorArray) // add bg colors
 scene.add(helper)
+
+console.log(bgColorArray)
 
 /**
  * Materials
@@ -257,30 +279,35 @@ scene.add(directionalLightCameraHelper)
 // // target debug
 // console.log(camTargetX)
 
-// // GUI Controls
-// const folder0 = gui.addFolder('Building Controls')
-// const folder1 = gui.addFolder('Lighting Controls')
-// const folder2 = gui.addFolder('Camera Controls')
-// // camera controls
-// folder2.add(camera.position, 'x').min(-50).max(50).step(0.001).name('camX')
-// folder2.add(camera.position, 'y').min(-50).max(50).step(0.001).name('camY')
-// folder2.add(camera.position, 'z').min(-50).max(50).step(0.001).name('camZ')
-// folder2.add(camTargetVector, 'x').min(-50).max(50).step(0.001).name('targetX')
-// folder2.add(camTargetVector, 'y').min(-50).max(50).step(0.001).name('targetY')
-// folder2.add(camTargetVector, 'z').min(-50).max(50).step(0.001).name('targetZ')
+// GUI Controls
+const folder0 = gui.addFolder('Building Controls')
+const folder1 = gui.addFolder('Lighting Controls')
+const folder2 = gui.addFolder('Camera Controls')
+const folder3 = gui.addFolder('Post-Process Control')
 
-// // building controls
-// // folder0.add(parameters, 'floorCount').min(0).max(100).step(1).onFinishChange(generateBuilding)
-// folder0.add(slabMaterial, 'metalness').min(0).max(1).step(0.001)
-// folder0.add(slabMaterial, 'roughness').min(0).max(1).step(0.001)
-// //folder0.add(slabMaterial, 'normalScale').min(0).max(1).step(0.0001)
-// //folder0.add(slabMaterial, 'displacementScale').min(0).max(1).step(0.0001)
-// // lighting controls
-// folder1.add(directionalLight.position, 'x').min(- 50).max(50).step(0.001).name('dLight X')
-// folder1.add(directionalLight.position, 'y').min(- 50).max(50).step(0.001).name('dLight Y')
-// folder1.add(directionalLight.position, 'z').min(- 200).max(50).step(0.001).name('dLight Z')
-// folder1.add(ambientLight, 'intensity').min(0).max(1).step(0.001).name('aLight intensity')
-// folder1.add(directionalLight, 'intensity').min(0).max(1).step(0.001).name('dLight intensity')
+// camera controls
+folder2.add(camera.position, 'x').min(-50).max(50).step(0.001).name('camX')
+folder2.add(camera.position, 'y').min(-50).max(50).step(0.001).name('camY')
+folder2.add(camera.position, 'z').min(-50).max(50).step(0.001).name('camZ')
+folder2.add(camTargetVector, 'x').min(-50).max(50).step(0.001).name('targetX')
+folder2.add(camTargetVector, 'y').min(-50).max(50).step(0.001).name('targetY')
+folder2.add(camTargetVector, 'z').min(-50).max(50).step(0.001).name('targetZ')
+
+// building controls
+// folder0.add(parameters, 'floorCount').min(0).max(100).step(1).onFinishChange(generateBuilding)
+folder0.add(slabMaterial, 'metalness').min(0).max(1).step(0.001)
+folder0.add(slabMaterial, 'roughness').min(0).max(1).step(0.001)
+//folder0.add(slabMaterial, 'normalScale').min(0).max(1).step(0.0001)
+//folder0.add(slabMaterial, 'displacementScale').min(0).max(1).step(0.0001)
+
+// lighting controls
+folder1.add(directionalLight.position, 'x').min(- 50).max(50).step(0.001).name('dLight X')
+folder1.add(directionalLight.position, 'y').min(- 50).max(50).step(0.001).name('dLight Y')
+folder1.add(directionalLight.position, 'z').min(- 200).max(50).step(0.001).name('dLight Z')
+folder1.add(ambientLight, 'intensity').min(0).max(1).step(0.001).name('aLight intensity')
+folder1.add(directionalLight, 'intensity').min(0).max(1).step(0.001).name('dLight intensity')
+
+// post-processing controls
 
 //Controls -- debug
 const controls = new OrbitControls(camera, canvas)
@@ -299,6 +326,66 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.shadowMap.enabled = true // enable for shadows ;) 
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
 document.body.appendChild(renderer.domElement)
+
+const effectComposer = new EffectComposer(renderer)
+effectComposer.setSize(sizes.width, sizes.height)
+effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+const renderPass = new RenderPass(scene, camera)
+effectComposer.addPass(renderPass)
+
+const params = {
+    shape: 1,
+    radius: 4,
+    rotateR: Math.PI / 4,
+    rotateB: Math.PI / 4,
+    rotateG: Math.PI / 4,
+    scatter: 0,
+    blending: 1,
+    blendingMode: 1,
+    greyscale: false,
+    disable: false
+}
+
+const halftonePass = new HalftonePass( sizes.width, sizes.height, params)
+const controller = {
+    radius: halftonePass.uniforms[ 'radius' ].value,
+    rotateR: halftonePass.uniforms[ 'rotateR' ].value / ( Math.PI / 180 ),
+    rotateG: halftonePass.uniforms[ 'rotateG' ].value / ( Math.PI / 180 ),
+    rotateB: halftonePass.uniforms[ 'rotateB' ].value / ( Math.PI / 180 ),
+    scatter: halftonePass.uniforms[ 'scatter' ].value,
+    shape: halftonePass.uniforms[ 'shape' ].value,
+    greyscale: halftonePass.uniforms[ 'greyscale' ].value,
+    blending: halftonePass.uniforms[ 'blending' ].value,
+    blendingMode: halftonePass.uniforms[ 'blendingMode' ].value,
+    disable: halftonePass.uniforms[ 'disable' ].value
+};
+
+effectComposer.addPass(halftonePass)
+
+function onGUIChange() {
+    halftonePass.uniforms[ 'radius' ].value = controller.radius;
+    halftonePass.uniforms[ 'rotateR' ].value = controller.rotateR * ( Math.PI / 180 );
+    halftonePass.uniforms[ 'rotateG' ].value = controller.rotateG * ( Math.PI / 180 );
+    halftonePass.uniforms[ 'rotateB' ].value = controller.rotateB * ( Math.PI / 180 );
+    halftonePass.uniforms[ 'scatter' ].value = controller.scatter;
+    halftonePass.uniforms[ 'shape' ].value = controller.shape;
+    halftonePass.uniforms[ 'greyscale' ].value = controller.greyscale;
+    halftonePass.uniforms[ 'blending' ].value = controller.blending;
+    halftonePass.uniforms[ 'blendingMode' ].value = controller.blendingMode;
+    halftonePass.uniforms[ 'disable' ].value = controller.disable;
+}
+
+folder3.add( controller, 'shape', { 'Dot': 1, 'Ellipse': 2, 'Line': 3, 'Square': 4 } ).onChange( onGUIChange );
+folder3.add( controller, 'radius', 1, 25 ).onChange( onGUIChange );
+folder3.add( controller, 'rotateR', 0, 90 ).onChange( onGUIChange );
+folder3.add( controller, 'rotateG', 0, 90 ).onChange( onGUIChange );
+folder3.add( controller, 'rotateB', 0, 90 ).onChange( onGUIChange );
+folder3.add( controller, 'scatter', 0, 1, 0.01 ).onChange( onGUIChange );
+folder3.add( controller, 'greyscale' ).onChange( onGUIChange );
+folder3.add( controller, 'blending', 0, 1, 0.01 ).onChange( onGUIChange );
+folder3.add( controller, 'blendingMode', { 'Linear': 1, 'Multiply': 2, 'Add': 3, 'Lighter': 4, 'Darker': 5 } ).onChange( onGUIChange );
+folder3.add( controller, 'disable' ).onChange( onGUIChange );
 
 /**
  * Animate
@@ -325,7 +412,8 @@ const tick = () =>
     //controls.update()
 
     // Render
-    renderer.render(scene, camera)
+    //renderer.render(scene, camera)
+    effectComposer.render()
 
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
