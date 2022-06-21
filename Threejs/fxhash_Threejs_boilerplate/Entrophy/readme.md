@@ -20,8 +20,9 @@ npm run build
 #### Development Todo
 Make the steel extrusions for columns
 Different column shapes? Circle, Rectangle, I-Beam
-Plants + entropy 
-Background color options + function for random selection
-Post production - color halftone
+Plants + entropy -> in progress + I added swirly points 
+ [] need to create either per floor or make the z-height for the entire building
+ [] need to calibrate the size
 Rain system boolean
 Background textures on a plane
+Post processing on resize

@@ -16,23 +16,24 @@ import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
     height: window.innerHeight
 }
 
-// const sketch = (s) => {
-//     s.setup = () => {
-//         var canVas = s.createCanvas(sizes.width, sizes.height);
-//         canVas.parent('p5Div')
-//     }
-//     s.draw = () => {
-//         s.noFill()
-//         s.stroke('white')
-//         s.strokeWeight(100)
-//         s.rect(0,0,sizes.width, sizes.height)
-//     }
-// }
+// P5 add composition border
+const sketch = (s) => {
+    s.setup = () => {
+        var canVas = s.createCanvas(sizes.width, sizes.height);
+        canVas.parent('p5Div')
+    }
+    s.draw = () => {
+        s.noFill()
+        s.stroke('white')
+        s.strokeWeight(100)
+        s.rect(0,0,sizes.width, sizes.height)
+    }
+}
 
-// const sketchInstance = () => {
-//     new p5(sketch, 'p5Div')
-// }
-// sketchInstance()
+const sketchInstance = () => {
+    new p5(sketch, 'p5Div')
+}
+sketchInstance()
 
 /**
  * Base
@@ -49,7 +50,9 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Random background color
 var bgColor = fxrand()
-var bgColorArray = ['red', 'black', 'white', 'pink', 'lightblue']
+// var bgColorArray = ['white', 'white', 'white', 'white', 'white']
+var bgColorArray = ['red', 'gray', 'white', 'pink', 'lightblue']
+
 
 if(bgColor >= 0.8){
     bgColorArray = bgColorArray[0]
@@ -137,37 +140,54 @@ columnRoughnessTexture.repeat.set(2,10)
 
 // Ground Plane
 const groundPlaneGeo = new THREE.PlaneGeometry(50,50,50)
-const groundPlaneMesh = new THREE.Mesh(groundPlaneGeo, slabMaterial)
+const groundPlaneMat = new THREE.MeshStandardMaterial({color: 'gray'})
+const groundPlaneMesh = new THREE.Mesh(groundPlaneGeo, groundPlaneMat)
 groundPlaneMesh.rotation.x = - Math.PI * 0.5
 groundPlaneMesh.position.y = - 0.5
 groundPlaneMesh.receiveShadow = true
 //scene.add(groundPlaneMesh)
 
 // Building Generator
+var floorCount = Math.floor(5 + fxrand() * 10)
+var floorToFloorHeight = 0.15 + fxrand() * 2
+var slabThickness = 0.03
+var buildingHeight = (floorCount * floorToFloorHeight) + (floorCount * slabThickness)
+var buildingWidth = Math.floor(2 + fxrand() * 5)
+var buildingDepth = Math.floor(2 + fxrand() * 5)
+//console.log(buildingHeight)
+console.log("Floor Count = " + floorCount)
+console.log("Floor To Floor Height = " + floorToFloorHeight)
+console.log("Slab Thickness = " + slabThickness)
+
 const parameters = {}
-parameters.floorCount = Math.floor(5 + fxrand() * 25)
-parameters.slabWidthX = Math.floor(2 + fxrand() * 5)
-parameters.slabWidthY = Math.floor(2 + fxrand() * 5)
+parameters.floorCount = floorCount
+parameters.slabWidthX = buildingWidth
+parameters.slabWidthY = buildingDepth
 parameters.floorOffset = 0
-parameters.floorToFloorHeight= 0.15 + fxrand() * 2
+parameters.floorToFloorHeight = floorToFloorHeight
 parameters.columnSpacing = 0.3 + fxrand() * 0.85
 parameters.edgeOffset = parameters.slabWidthY/2 - parameters.columnSpacing
 parameters.widthX = parameters.slabWidthX - parameters.edgeOffset/4
 parameters.widthY = parameters.slabWidthY - parameters.edgeOffset/4
 parameters.countX = parameters.widthX / parameters.columnSpacing
 parameters.countY = parameters.widthY / parameters.columnSpacing
+parameters.slabThickness = slabThickness
 
 let slabsArray = []
 
-const generateBuilding = () => {
-    /**
-     * Geometry 
-     */
-    // Slab Init
-    const slabs = new THREE.Group()
-    const slabGeometry = new THREE.BoxGeometry(parameters.slabWidthX, 0.03, parameters.slabWidthY, 4,1,4)
-    scene.add(slabs)
+// Slab Init
+const slabs = new THREE.Group()
+const slabGeometry = new THREE.BoxGeometry(parameters.slabWidthX, parameters.slabThickness, parameters.slabWidthY, 4,1,4)
+scene.add(slabs)
 
+// Column Init
+const columnGroup = new THREE.Group()
+const columnGeo = new THREE.BoxGeometry(0.05, parameters.floorToFloorHeight * parameters.floorCount, 0.05, 4,1,4)
+scene.add(columnGroup)
+
+var maxHeightArray = []
+
+const generateBuilding = () => {
     for(let i = 0; i < parameters.floorCount; i++){
         const slab = new THREE.Mesh(
             slabGeometry,
@@ -175,18 +195,13 @@ const generateBuilding = () => {
         )
         slab.geometry.setAttribute('uv2', new THREE.BufferAttribute(slab.geometry.attributes.uv.array,2))
         slab.position.set(0,parameters.floorOffset,0)
+        maxHeightArray.push(slab.position.y)
         slabs.add(slab)
         slab.castShadow = true
         slab.receiveShadow = true
         slabsArray.push(slab)
         parameters.floorOffset+=parameters.floorToFloorHeight;
     }
-
-    // Column Init
-    const columnGroup = new THREE.Group()
-    const columnGeo = new THREE.BoxGeometry(0.05, parameters.floorToFloorHeight * parameters.floorCount, 0.05, 4,1,4)
-    scene.add(columnGroup)
-
     for(let x = 0; x <= parameters.countX; x++){
         for(let y = 0; y <= parameters.countY; y++){
             const columns = new THREE.Mesh(columnGeo, columnMaterial)
@@ -199,25 +214,17 @@ const generateBuilding = () => {
         }
     }
 }
-
 generateBuilding()
 
-// Entropy
-console.log(slabsArray[0].geometry)
-const lineMat = new THREE.LineBasicMaterial( { color: 0x0000ff } );
-const points = [];
-points.push( new THREE.Vector3( 0, 0, 0 ) );
-points.push( new THREE.Vector3( 0, 10, 0 ) );
-points.push( new THREE.Vector3( 10, 0, 0 ) );
-
-const geometry = new THREE.BufferGeometry().setFromPoints( points );
-const line = new THREE.Line( geometry, lineMat );
-scene.add( line );
+var totalHeightIndex = maxHeightArray.length
+var totalHeight = maxHeightArray[totalHeightIndex - 1]
+console.log(maxHeightArray)
+console.log(totalHeight)
 
 /**
  * Camera
  */
-// Base camera
+
 // Camera target
 var targetIndex = Math.floor(fxrand() * (slabsArray.length - 2))
 
@@ -246,6 +253,77 @@ const camTargetX = slabsArray[targetIndex].position.x + targetXShift
 const camTargetY = slabsArray[targetIndex].position.y + targetYShift
 const camTargetZ = slabsArray[targetIndex].position.z + targetZShift
 const camTargetVector = new THREE.Vector3(camTargetX,camTargetY,camTargetZ)
+
+/**
+ * Entropy
+ */
+
+var entropyStartPosY = slabsArray[targetIndex].position.y
+
+const entropyParams = {}
+entropyParams.count = Math.floor(500000 + fxrand() * 1000000)
+entropyParams.size = 0.1
+entropyParams.radius = buildingDepth / 2
+entropyParams.depth = buildingDepth
+entropyParams.width = buildingWidth * 2
+entropyParams.branches = Math.floor(2 + fxrand() * 10)
+entropyParams.spin = 0.25 + fxrand() * 5
+entropyParams.randomness = fxrand() * 0.2
+entropyParams.randomnessPower = Math.floor(1 + fxrand() * 10)
+entropyParams.insideColor = 'blue'
+entropyParams.outsideColor = 'red'
+
+const generateEntropy = () => {
+
+    const entropyMat = new THREE.PointsMaterial({
+        size: entropyParams.size,
+        sizeAttenuation: true,
+        depthWrite: false, 
+        blending: THREE.MultiplyBlending,
+        vertexColors: true
+    })
+
+    const entropyGeo = new THREE.BufferGeometry()
+    const positions = new Float32Array(entropyParams.count * 3)
+    const colors = new Float32Array(entropyParams.count * 3)
+    const colorInside = new THREE.Color(entropyParams.insideColor)
+    const colorOutside = new THREE.Color(entropyParams.outsideColor)
+
+    for(let i = 0; i < entropyParams.count; i++)
+    {
+        const i3 = i * 3
+        const radius = Math.random() * entropyParams.radius
+        const depth = Math.random() * entropyParams.depth
+        const width = Math.random() * entropyParams.width
+        const spinAngle = radius * entropyParams.spin
+        const branchAngle = (i % entropyParams.branches) / entropyParams.branches * Math.PI * 2
+
+        const randomX = Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : - 1) * entropyParams.randomness * width
+
+        // Vertical Dimension
+        const randomY = entropyStartPosY + Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? totalHeight : 0) * entropyParams.randomness * floorCount
+
+        // Dimension
+        const randomZ = Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : - 1) * entropyParams.randomness * depth
+
+        positions[i3    ] = Math.cos(branchAngle + spinAngle) * radius + randomX
+        positions[i3 + 1] = randomY
+        positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ
+
+        const mixedColor = colorInside.clone()
+        mixedColor.lerp(colorOutside, radius / entropyParams.radius)
+
+        colors[i3    ] = mixedColor.r
+        colors[i3 + 1] = mixedColor.g
+        colors[i3 + 2] = mixedColor.b
+    }
+    entropyGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    entropyGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+
+    const entropyPoints = new THREE.Points(entropyGeo, entropyMat)
+    scene.add(entropyPoints)
+}
+generateEntropy()
 
 /**
  * Lights
@@ -312,7 +390,7 @@ folder1.add(directionalLight, 'intensity').min(0).max(1).step(0.001).name('dLigh
 
 //Controls -- debug
 const controls = new OrbitControls(camera, canvas)
-controls.enabled = true
+controls.enabled = false
 controls.enableDamping = true
 
 /**
@@ -337,7 +415,7 @@ effectComposer.addPass(renderPass)
 
 const params = {
     shape: 1,
-    radius: 4,
+    radius: 3,
     rotateR: Math.PI / 4,
     rotateB: Math.PI / 4,
     rotateG: Math.PI / 4,
@@ -345,7 +423,7 @@ const params = {
     blending: 1,
     blendingMode: 1,
     greyscale: false,
-    disable: true
+    disable: false
 }
 
 const halftonePass = new HalftonePass( sizes.width, sizes.height, params)
@@ -432,7 +510,7 @@ const tick = () =>
     camera.lookAt(camTargetVector)
 
     // Update controls
-    controls.update()
+    //controls.update()
 
     // Render
     //renderer.render(scene, camera)
