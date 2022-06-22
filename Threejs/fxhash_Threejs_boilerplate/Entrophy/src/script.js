@@ -50,8 +50,8 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Random background color
 var bgColor = fxrand()
-// var bgColorArray = ['white', 'white', 'white', 'white', 'white']
-var bgColorArray = ['red', 'gray', 'white', 'pink', 'lightblue']
+var bgColorArray = ['white', 'white', 'white', 'white', 'white']
+//var bgColorArray = ['red', 'gray', 'white', 'pink', 'lightblue']
 
 
 if(bgColor >= 0.8){
@@ -261,7 +261,7 @@ const camTargetVector = new THREE.Vector3(camTargetX,camTargetY,camTargetZ)
 var entropyStartPosY = slabsArray[targetIndex + 2].position.y
 
 const entropyParams = {}
-entropyParams.count = 1000000 //Math.floor(100 + fxrand() * 5000) //Math.floor(500000 + fxrand() * 1000000)
+entropyParams.count = 100000 //Math.floor(100 + fxrand() * 5000) //Math.floor(500000 + fxrand() * 1000000)
 entropyParams.size = 0.05 + fxrand() * 0.1
 entropyParams.radius = buildingDepth / 3
 entropyParams.depth = buildingDepth
@@ -300,13 +300,13 @@ const generateEntropy = () => {
         const branchAngle = (i % entropyParams.branches) / entropyParams.branches * Math.PI * 2
         var numberOfFloorsCovered = Math.floor(1 + fxrand() * floorCount)
 
-        const randomX = Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : - 1) * entropyParams.randomness * width
+        const randomX = Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 0 : 0) * entropyParams.randomness * width // this controls how far spread the intial drop of points can reach <---- adjust the random conditional to constrain it within the slab boundary or let it grow beyond
 
         // Vertical Dimension
         const randomY = entropyStartPosY + slabThickness/2 * (Math.random() < 0.5 ? 0 : -0.5) // <--- I tried to use this as a vertical jitter, it's not working. Better to just control it in the position constructor below to not go to every floor. 
 
         // Dimension
-        const randomZ = Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : - 1) * entropyParams.randomness * depth
+        const randomZ = Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 0 : 0) * entropyParams.randomness * depth // this controls how far spread the inital drop of points can reach <---- adjust the random conditional to constrain it within the slab boundary or let it grow beyond
 
         // const randomX = Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : - 1) * entropyParams.randomness * width
 
