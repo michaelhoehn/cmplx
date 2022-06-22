@@ -33,7 +33,7 @@ const sketch = (s) => {
 const sketchInstance = () => {
     new p5(sketch, 'p5Div')
 }
-sketchInstance()
+//sketchInstance()
 
 /**
  * Base
@@ -258,12 +258,12 @@ const camTargetVector = new THREE.Vector3(camTargetX,camTargetY,camTargetZ)
  * Entropy
  */
 
-var entropyStartPosY = slabsArray[targetIndex].position.y
+var entropyStartPosY = slabsArray[targetIndex + 2].position.y
 
 const entropyParams = {}
-entropyParams.count = Math.floor(500000 + fxrand() * 1000000)
-entropyParams.size = 0.1
-entropyParams.radius = buildingDepth / 2
+entropyParams.count = 100000 //Math.floor(500000 + fxrand() * 1000000)
+entropyParams.size = 0.05 + fxrand() * 0.1
+entropyParams.radius = buildingDepth / 3
 entropyParams.depth = buildingDepth
 entropyParams.width = buildingWidth * 2
 entropyParams.branches = Math.floor(2 + fxrand() * 10)
@@ -288,6 +288,7 @@ const generateEntropy = () => {
     const colors = new Float32Array(entropyParams.count * 3)
     const colorInside = new THREE.Color(entropyParams.insideColor)
     const colorOutside = new THREE.Color(entropyParams.outsideColor)
+    const pointsPositions = []
 
     for(let i = 0; i < entropyParams.count; i++)
     {
@@ -301,7 +302,7 @@ const generateEntropy = () => {
         const randomX = Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : - 1) * entropyParams.randomness * width
 
         // Vertical Dimension
-        const randomY = entropyStartPosY + Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? totalHeight : 0) * entropyParams.randomness * floorCount
+        const randomY = entropyStartPosY - Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : 0) * entropyParams.randomness * floorCount
 
         // Dimension
         const randomZ = Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : - 1) * entropyParams.randomness * depth
@@ -309,6 +310,8 @@ const generateEntropy = () => {
         positions[i3    ] = Math.cos(branchAngle + spinAngle) * radius + randomX
         positions[i3 + 1] = randomY
         positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ
+
+        pointsPositions.push(new THREE.Vector3(positions[i3    ], positions[i3 + 1], positions[i3 + 2]))
 
         const mixedColor = colorInside.clone()
         mixedColor.lerp(colorOutside, radius / entropyParams.radius)
@@ -322,6 +325,15 @@ const generateEntropy = () => {
 
     const entropyPoints = new THREE.Points(entropyGeo, entropyMat)
     scene.add(entropyPoints)
+
+    const lineMaterial = new THREE.LineBasicMaterial({
+        color: 'white',
+        linewidth: 0.05,
+        blendingMode: 'multiply' 
+    })
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints(pointsPositions)
+    const entropyLines = new THREE.Line(lineGeometry,lineMaterial)
+    scene.add(entropyLines)
 }
 generateEntropy()
 
@@ -390,7 +402,7 @@ folder1.add(directionalLight, 'intensity').min(0).max(1).step(0.001).name('dLigh
 
 //Controls -- debug
 const controls = new OrbitControls(camera, canvas)
-controls.enabled = false
+controls.enabled = true
 controls.enableDamping = true
 
 /**
@@ -423,7 +435,7 @@ const params = {
     blending: 1,
     blendingMode: 1,
     greyscale: false,
-    disable: false
+    disable: true
 }
 
 const halftonePass = new HalftonePass( sizes.width, sizes.height, params)
