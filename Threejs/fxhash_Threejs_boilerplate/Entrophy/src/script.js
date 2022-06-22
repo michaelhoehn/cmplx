@@ -261,7 +261,7 @@ const camTargetVector = new THREE.Vector3(camTargetX,camTargetY,camTargetZ)
 var entropyStartPosY = slabsArray[targetIndex + 2].position.y
 
 const entropyParams = {}
-entropyParams.count = 100000 //Math.floor(500000 + fxrand() * 1000000)
+entropyParams.count = 1000000 //Math.floor(100 + fxrand() * 5000) //Math.floor(500000 + fxrand() * 1000000)
 entropyParams.size = 0.05 + fxrand() * 0.1
 entropyParams.radius = buildingDepth / 3
 entropyParams.depth = buildingDepth
@@ -270,8 +270,8 @@ entropyParams.branches = Math.floor(2 + fxrand() * 10)
 entropyParams.spin = 0.25 + fxrand() * 5
 entropyParams.randomness = fxrand() * 0.2
 entropyParams.randomnessPower = Math.floor(1 + fxrand() * 10)
-entropyParams.insideColor = 'blue'
-entropyParams.outsideColor = 'red'
+entropyParams.insideColor = 'darkgreen'
+entropyParams.outsideColor = 'lightgreen'
 
 const generateEntropy = () => {
 
@@ -298,18 +298,37 @@ const generateEntropy = () => {
         const width = Math.random() * entropyParams.width
         const spinAngle = radius * entropyParams.spin
         const branchAngle = (i % entropyParams.branches) / entropyParams.branches * Math.PI * 2
+        var numberOfFloorsCovered = Math.floor(1 + fxrand() * floorCount)
 
         const randomX = Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : - 1) * entropyParams.randomness * width
 
         // Vertical Dimension
-        const randomY = entropyStartPosY - Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : 0) * entropyParams.randomness * floorCount
+        const randomY = entropyStartPosY + slabThickness/2 * (Math.random() < 0.5 ? 0 : -0.5) // <--- I tried to use this as a vertical jitter, it's not working. Better to just control it in the position constructor below to not go to every floor. 
 
         // Dimension
         const randomZ = Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : - 1) * entropyParams.randomness * depth
 
-        positions[i3    ] = Math.cos(branchAngle + spinAngle) * radius + randomX
-        positions[i3 + 1] = randomY
-        positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ
+        // const randomX = Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : - 1) * entropyParams.randomness * width
+
+        // // Vertical Dimension
+        // const randomY = entropyStartPosY - Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : 0) * entropyParams.randomness * floorCount
+
+        // // Dimension
+        // const randomZ = Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : - 1) * entropyParams.randomness * depth
+
+        // Control point spread width
+        positions[i3    ] = randomX + (Math.random() - 0.5) * buildingWidth
+
+        // change this one below!
+        positions[i3 + 1] = randomY + (Math.random() < 0.5 ? 0 : - (floorToFloorHeight * numberOfFloorsCovered) * fxrand()) 
+        // the conditions controls each point going to a different slab start point ----> - floorToFloorHeight * Math.floor(fxrand() * floorCount) needs to be changed to allow for dripping behavior, then wrap this in a for loop for each floor
+
+        // Control point spread depth
+        positions[i3 + 2] = randomZ + (Math.random() - 0.5) * buildingDepth
+
+        // positions[i3    ] = Math.cos(branchAngle + spinAngle) * radius + randomX
+        // positions[i3 + 1] = randomY
+        // positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ
 
         pointsPositions.push(new THREE.Vector3(positions[i3    ], positions[i3 + 1], positions[i3 + 2]))
 
@@ -333,7 +352,7 @@ const generateEntropy = () => {
     })
     const lineGeometry = new THREE.BufferGeometry().setFromPoints(pointsPositions)
     const entropyLines = new THREE.Line(lineGeometry,lineMaterial)
-    scene.add(entropyLines)
+    //scene.add(entropyLines)
 }
 generateEntropy()
 
@@ -427,7 +446,7 @@ effectComposer.addPass(renderPass)
 
 const params = {
     shape: 1,
-    radius: 3,
+    radius: 1,
     rotateR: Math.PI / 4,
     rotateB: Math.PI / 4,
     rotateG: Math.PI / 4,
@@ -435,7 +454,7 @@ const params = {
     blending: 1,
     blendingMode: 1,
     greyscale: false,
-    disable: true
+    disable: false
 }
 
 const halftonePass = new HalftonePass( sizes.width, sizes.height, params)
