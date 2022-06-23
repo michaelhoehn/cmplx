@@ -174,6 +174,15 @@ parameters.countY = parameters.widthY / parameters.columnSpacing
 parameters.slabThickness = slabThickness
 
 let slabsArray = []
+let columnType = fxrand()
+// const columnDebugMat = new THREE.MeshBasicMaterial({color: 'red'})
+
+// Wide Flange Columns
+const iGroup = new THREE.Group()
+const iGeo0 = new THREE.BoxGeometry(0.005, parameters.floorToFloorHeight * parameters.floorCount, 0.05, 4,1,4)
+const iGeo1 = new THREE.BoxGeometry(0.05, parameters.floorToFloorHeight * parameters.floorCount, 0.005, 4,1,4)
+const iGeo2 = new THREE.BoxGeometry(0.005, parameters.floorToFloorHeight * parameters.floorCount, 0.05, 4,1,4)
+scene.add(iGroup)
 
 // Slab Init
 const slabs = new THREE.Group()
@@ -182,7 +191,7 @@ scene.add(slabs)
 
 // Column Init
 const columnGroup = new THREE.Group()
-const columnGeo = new THREE.BoxGeometry(0.05, parameters.floorToFloorHeight * parameters.floorCount, 0.05, 4,1,4)
+const columnGeo = new THREE.BoxGeometry(0.05, parameters.floorToFloorHeight * parameters.floorCount, 0.05, 4,1,4) // <----- Todo column width and depth can vary
 scene.add(columnGroup)
 
 var maxHeightArray = []
@@ -202,15 +211,45 @@ const generateBuilding = () => {
         slabsArray.push(slab)
         parameters.floorOffset+=parameters.floorToFloorHeight;
     }
-    for(let x = 0; x <= parameters.countX; x++){
-        for(let y = 0; y <= parameters.countY; y++){
-            const columns = new THREE.Mesh(columnGeo, columnMaterial)
-            columns.geometry.setAttribute('uv2', new THREE.BufferAttribute(columns.geometry.attributes.uv.array,2))
-            const posX = (x/parameters.countX) * parameters.widthX - parameters.widthX / 2
-            const posY = (y/parameters.countY) * parameters.widthY - parameters.widthY / 2
-            columns.position.set(posX, ((parameters.floorToFloorHeight * parameters.floorCount)/2) - parameters.floorToFloorHeight, posY)
-            columnGroup.add(columns)
-            columns.castShadow = true
+
+    if(columnType <= 0.5){
+        // Square Columns   <----- Todo: Rectangle Columns 
+        for(let x = 0; x <= parameters.countX; x++){
+            for(let y = 0; y <= parameters.countY; y++){
+                const columns = new THREE.Mesh(columnGeo, columnMaterial)
+                columns.geometry.setAttribute('uv2', new THREE.BufferAttribute(columns.geometry.attributes.uv.array,2))
+                const posX = (x/parameters.countX) * parameters.widthX - parameters.widthX / 2
+                const posY = (y/parameters.countY) * parameters.widthY - parameters.widthY / 2
+                columns.position.set(posX, ((parameters.floorToFloorHeight * parameters.floorCount)/2) - parameters.floorToFloorHeight, posY)
+                columnGroup.add(columns)
+                columns.castShadow = true
+            }
+        }
+    } else {
+        // Place IGroup
+        for(let x = 0; x <= parameters.countX; x++){
+            for(let y = 0; y <= parameters.countY; y++){
+                const iMesh0 = new THREE.Mesh(iGeo0, columnMaterial)
+                const iMesh1 = new THREE.Mesh(iGeo1, columnMaterial)
+                var mesh1XOffset = 0.05/2
+                const iMesh2 = new THREE.Mesh(iGeo2, columnMaterial)
+                var mesh2XOffset = 0.05
+                iMesh0.geometry.setAttribute('uv2', new THREE.BufferAttribute(iMesh0.geometry.attributes.uv.array,2))
+                iMesh1.geometry.setAttribute('uv2', new THREE.BufferAttribute(iMesh1.geometry.attributes.uv.array,2))
+                iMesh2.geometry.setAttribute('uv2', new THREE.BufferAttribute(iMesh2.geometry.attributes.uv.array,2))
+                const posX = (x/parameters.countX) * parameters.widthX - parameters.widthX / 2
+                const posY = (y/parameters.countY) * parameters.widthY - parameters.widthY / 2
+                iMesh0.position.set(posX, ((parameters.floorToFloorHeight * parameters.floorCount)/2) - parameters.floorToFloorHeight, posY)
+                iMesh1.position.set(posX + mesh1XOffset, ((parameters.floorToFloorHeight * parameters.floorCount)/2) - parameters.floorToFloorHeight, posY)
+                iMesh2.position.set(posX + mesh2XOffset, ((parameters.floorToFloorHeight * parameters.floorCount)/2) - parameters.floorToFloorHeight, posY)
+                iGroup.add(iMesh0, iMesh1, iMesh2)
+                iMesh0.castShadow = true
+                iMesh1.castShadow = true
+                iMesh2.castShadow = true
+                iMesh0.receiveShadow = true
+                iMesh1.receiveShadow = true
+                iMesh2.receiveShadow = true
+            }
         }
     }
 }
@@ -308,14 +347,6 @@ const generateEntropy = () => {
         // Dimension
         const randomZ = Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 0 : 0) * entropyParams.randomness * depth // this controls how far spread the inital drop of points can reach <---- adjust the random conditional to constrain it within the slab boundary or let it grow beyond
 
-        // const randomX = Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : - 1) * entropyParams.randomness * width
-
-        // // Vertical Dimension
-        // const randomY = entropyStartPosY - Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : 0) * entropyParams.randomness * floorCount
-
-        // // Dimension
-        // const randomZ = Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : - 1) * entropyParams.randomness * depth
-
         // Control point spread width
         positions[i3    ] = randomX + (Math.random() - 0.5) * buildingWidth
 
@@ -357,6 +388,15 @@ const generateEntropy = () => {
 generateEntropy()
 
 /**
+ * Background Setting
+ */
+
+const generateBackgroundSetting = () => {
+
+}
+generateBackgroundSetting()
+
+/**
  * Lights
  */
 // Ambient light
@@ -372,8 +412,8 @@ directionalLight.position.set(dLightXPos, dLightYPos, dLightZPos)
 scene.add(directionalLight)
 directionalLight.castShadow = true
 
-directionalLight.shadow.mapSize.width = 2048
-directionalLight.shadow.mapSize.height = 2048
+directionalLight.shadow.mapSize.width = 1024
+directionalLight.shadow.mapSize.height = 1024
 directionalLight.shadow.camera.top = 10
 directionalLight.shadow.camera.bottom = -10
 directionalLight.shadow.camera.right = 10
@@ -423,6 +463,7 @@ folder1.add(directionalLight, 'intensity').min(0).max(1).step(0.001).name('dLigh
 const controls = new OrbitControls(camera, canvas)
 controls.enabled = true
 controls.enableDamping = true
+//controls.autoRotate = true
 
 /**
  * Renderer
@@ -454,7 +495,7 @@ const params = {
     blending: 1,
     blendingMode: 1,
     greyscale: false,
-    disable: false
+    disable: true
 }
 
 const halftonePass = new HalftonePass( sizes.width, sizes.height, params)
@@ -533,12 +574,12 @@ const tick = () =>
     // sphere.position.z = 1 + Math.sin(elapsedTime)
     // sphere.position.y = Math.abs(Math.sin(elapsedTime * 3))
 
-    // camera.position.x = Math.cos(elapsedTime) * 10
-    // camera.position.z = Math.sin(elapsedTime) * 10
-    // camera.position.y = Math.sin(elapsedTime) * 1.5
+    //camera.position.x = Math.cos(elapsedTime) * 10
+    //camera.position.z = Math.sin(elapsedTime) * 10
+    //camera.position.y = Math.sin(elapsedTime) * 1.5
 
     // Update camera
-    camera.lookAt(camTargetVector)
+    //camera.lookAt(camTargetVector)
 
     // Update controls
     //controls.update()
