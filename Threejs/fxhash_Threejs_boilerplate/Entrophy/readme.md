@@ -18,11 +18,9 @@ npm run build
 ### All fxhash functionality was added by Michael Hoehn (cmplx)
 
 #### Development Todo
-Make the steel extrusions for columns
-Different column shapes? Circle, Rectangle, I-Beam
-Plants + entropy -> in progress + I added swirly points 
- [] need to create either per floor or make the z-height for the entire building
- [] need to calibrate the size
-Rain system boolean
-Background textures on a plane
-Post processing on resize
+- Background geometry is intersecting my points graphics
+- add randomly rotate geometry to the background
+- floor slabs and columns with buildings
+- Rain system boolean
+- Background textures on a plane
+- Post processing on resize

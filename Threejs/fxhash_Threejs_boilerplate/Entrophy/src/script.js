@@ -145,7 +145,7 @@ const groundPlaneMesh = new THREE.Mesh(groundPlaneGeo, groundPlaneMat)
 groundPlaneMesh.rotation.x = - Math.PI * 0.5
 groundPlaneMesh.position.y = - 0.5
 groundPlaneMesh.receiveShadow = true
-//scene.add(groundPlaneMesh)
+scene.add(groundPlaneMesh)
 
 // Building Generator
 var floorCount = Math.floor(5 + fxrand() * 10)
@@ -271,6 +271,7 @@ const camera = new THREE.PerspectiveCamera(20, sizes.width / sizes.height, 0.1, 
 camera.position.x = 4.5
 camera.position.y = slabsArray[targetIndex].position.y
 camera.position.z = -7.5
+camera.far = 10000
 scene.add(camera)
 
 // function to decide which side the camera will target
@@ -292,6 +293,50 @@ const camTargetX = slabsArray[targetIndex].position.x + targetXShift
 const camTargetY = slabsArray[targetIndex].position.y + targetYShift
 const camTargetZ = slabsArray[targetIndex].position.z + targetZShift
 const camTargetVector = new THREE.Vector3(camTargetX,camTargetY,camTargetZ)
+
+/**
+ * Background Setting
+ */
+
+ let bgBuildingsCount = 500
+
+ const bgMassings = new THREE.Group()
+ const backgroundBuildings = new THREE.BoxGeometry(0.2, 0.2, 0.2)
+ const backgroundBuildingsMaterial = new THREE.MeshStandardMaterial({ color: 'white' })
+ scene.add(bgMassings)
+ 
+ const generateBackgroundBuildings = () => {
+     for (let i = 0; i < bgBuildingsCount; i++) {
+         // random dims for each variable 
+         let bgBuildingsWidth = 0.5 + fxrand() * 5
+         let bgBuildingsHeight = 10 + fxrand() * 100
+         let bgBuildingsDepth = 0.5 + fxrand() * 5
+ 
+         const angle = Math.random() * Math.PI * 2 // Random angle
+         const radius = 10 + Math.random() * 20     // Random radius
+         const x = Math.cos(angle) * radius        // Get the x position using cosinus
+         const z = Math.sin(angle) * radius        // Get the z position using sinus
+ 
+         // Create the mesh
+         const massing = new THREE.Mesh(backgroundBuildings, backgroundBuildingsMaterial)
+ 
+         // Scale
+         massing.scale.x = bgBuildingsDepth
+         massing.scale.y = bgBuildingsHeight
+         massing.scale.z = bgBuildingsWidth
+ 
+         // Position
+         massing.position.set(x, 0, z)                              
+ 
+         // Rotation
+         massing.rotation.y = (Math.random() - 0.5) * 1
+ 
+         // Add to the graves container
+         bgMassings.add(massing)
+     }
+ }
+ generateBackgroundBuildings()
+ bgMassings.renderOrder = 2
 
 /**
  * Entropy
@@ -318,7 +363,8 @@ const generateEntropy = () => {
         size: entropyParams.size,
         sizeAttenuation: true,
         depthWrite: false, 
-        blending: THREE.MultiplyBlending,
+        opacity: 1,
+        //blending: THREE.MultiplyBlending,
         vertexColors: true
     })
 
@@ -357,10 +403,6 @@ const generateEntropy = () => {
         // Control point spread depth
         positions[i3 + 2] = randomZ + (Math.random() - 0.5) * buildingDepth
 
-        // positions[i3    ] = Math.cos(branchAngle + spinAngle) * radius + randomX
-        // positions[i3 + 1] = randomY
-        // positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ
-
         pointsPositions.push(new THREE.Vector3(positions[i3    ], positions[i3 + 1], positions[i3 + 2]))
 
         const mixedColor = colorInside.clone()
@@ -379,22 +421,13 @@ const generateEntropy = () => {
     const lineMaterial = new THREE.LineBasicMaterial({
         color: 'white',
         linewidth: 0.05,
-        blendingMode: 'multiply' 
+        // blendingMode: 'darken' 
     })
     const lineGeometry = new THREE.BufferGeometry().setFromPoints(pointsPositions)
     const entropyLines = new THREE.Line(lineGeometry,lineMaterial)
     //scene.add(entropyLines)
 }
 generateEntropy()
-
-/**
- * Background Setting
- */
-
-const generateBackgroundSetting = () => {
-
-}
-generateBackgroundSetting()
 
 /**
  * Lights
@@ -495,7 +528,7 @@ const params = {
     blending: 1,
     blendingMode: 1,
     greyscale: false,
-    disable: true
+    disable: false
 }
 
 const halftonePass = new HalftonePass( sizes.width, sizes.height, params)
@@ -579,7 +612,7 @@ const tick = () =>
     //camera.position.y = Math.sin(elapsedTime) * 1.5
 
     // Update camera
-    //camera.lookAt(camTargetVector)
+    camera.lookAt(camTargetVector)
 
     // Update controls
     //controls.update()
