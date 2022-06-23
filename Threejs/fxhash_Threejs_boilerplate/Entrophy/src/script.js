@@ -271,7 +271,6 @@ const camera = new THREE.PerspectiveCamera(20, sizes.width / sizes.height, 0.1, 
 camera.position.x = 4.5
 camera.position.y = slabsArray[targetIndex].position.y
 camera.position.z = -7.5
-camera.far = 10000
 scene.add(camera)
 
 // function to decide which side the camera will target
@@ -362,10 +361,11 @@ const generateEntropy = () => {
     const entropyMat = new THREE.PointsMaterial({
         size: entropyParams.size,
         sizeAttenuation: true,
-        depthWrite: false, 
+        depthWrite: true, 
         opacity: 1,
-        //blending: THREE.MultiplyBlending,
-        vertexColors: true
+        blending: THREE.MultiplyBlending,
+        vertexColors: true,
+        renderOrder: 0
     })
 
     const entropyGeo = new THREE.BufferGeometry()
