@@ -443,7 +443,7 @@ generateEntropy()
  * Lights
  */
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.75)
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
 scene.add(ambientLight)
 
 // Directional light
@@ -466,7 +466,7 @@ directionalLight.shadow.camera.far = 50
 // directionalLight.shadow.radius = 10
 
 const directionalLightCameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera)
-directionalLightCameraHelper.visible = true
+directionalLightCameraHelper.visible = false
 scene.add(directionalLightCameraHelper)
 
 // // target debug
@@ -527,6 +527,14 @@ effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 const renderPass = new RenderPass(scene, camera)
 effectComposer.addPass(renderPass)
+
+/**
+ * Fog maybe? 
+ */
+
+ const fog = new THREE.Fog('#262837', 2, 500)
+ scene.fog = fog
+ renderer.setClearColor('#262837')
 
 const params = {
     shape: 1,
