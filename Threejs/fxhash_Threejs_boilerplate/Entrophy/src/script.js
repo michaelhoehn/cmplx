@@ -50,6 +50,7 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Random background color
 var bgColor = fxrand()
+//var bgColorArray = ['lightblue', 'lightblue', 'lightblue', 'lightblue', 'lightblue']
 var bgColorArray = ['white', 'white', 'white', 'white', 'white']
 //var bgColorArray = ['red', 'gray', 'white', 'pink', 'lightblue']
 
@@ -86,6 +87,10 @@ const columnColorTexture = textureLoader.load('/textures/color.jpg')
 const columnAOTexture = textureLoader.load('/textures/ao.jpg')
 const columnNormalTexture = textureLoader.load('/textures/normal.jpg')
 const columnRoughnessTexture = textureLoader.load('/textures/roughness.jpg')
+const gradientTexture = textureLoader.load('/textures/gradients/5.jpg')
+gradientTexture.minFilter = THREE.NearestFilter
+gradientTexture.magFilter = THREE.NearestFilter
+const matCapTexture = textureLoader.load('/textures/matcaps/4.png')
 
 // Slab Material
 const slabMaterial = new THREE.MeshStandardMaterial({
@@ -139,8 +144,10 @@ columnRoughnessTexture.repeat.set(2,10)
  */
 
 // Ground Plane
-const groundPlaneGeo = new THREE.PlaneGeometry(50,50,50)
-const groundPlaneMat = new THREE.MeshStandardMaterial({color: 'gray'})
+const groundPlaneGeo = new THREE.PlaneGeometry(1000,1000,50)
+//const groundPlaneMat = new THREE.MeshStandardMaterial({color: 'gray'})
+const groundPlaneMat = new THREE.MeshMatcapMaterial()
+groundPlaneMat.matcap = matCapTexture
 const groundPlaneMesh = new THREE.Mesh(groundPlaneGeo, groundPlaneMat)
 groundPlaneMesh.rotation.x = - Math.PI * 0.5
 groundPlaneMesh.position.y = - 0.5
@@ -267,8 +274,8 @@ console.log(totalHeight)
 // Camera target
 var targetIndex = Math.floor(fxrand() * (slabsArray.length - 2))
 
-const camera = new THREE.PerspectiveCamera(20, sizes.width / sizes.height, 0.1, 100)
-camera.position.x = 4.5
+const camera = new THREE.PerspectiveCamera(20, sizes.width / sizes.height, 0.1, 2000)
+camera.position.x = 8
 camera.position.y = slabsArray[targetIndex].position.y
 camera.position.z = -7.5
 scene.add(camera)
@@ -301,18 +308,21 @@ const camTargetVector = new THREE.Vector3(camTargetX,camTargetY,camTargetZ)
 
  const bgMassings = new THREE.Group()
  const backgroundBuildings = new THREE.BoxGeometry(0.2, 0.2, 0.2)
- const backgroundBuildingsMaterial = new THREE.MeshStandardMaterial({ color: 'white' })
+//  const backgroundBuildingsMaterial = new THREE.MeshToonMaterial()
+//  backgroundBuildingsMaterial.gradientMap = gradientTexture
+const backgroundBuildingsMaterial = new THREE.MeshMatcapMaterial()
+backgroundBuildingsMaterial.matcap = matCapTexture
  scene.add(bgMassings)
  
  const generateBackgroundBuildings = () => {
      for (let i = 0; i < bgBuildingsCount; i++) {
          // random dims for each variable 
-         let bgBuildingsWidth = 0.5 + fxrand() * 5
-         let bgBuildingsHeight = 10 + fxrand() * 100
-         let bgBuildingsDepth = 0.5 + fxrand() * 5
+         let bgBuildingsWidth = 5 + fxrand() * 150
+         let bgBuildingsHeight = 50 + fxrand() * 500
+         let bgBuildingsDepth = 5 + fxrand() * 150
  
          const angle = Math.random() * Math.PI * 2 // Random angle
-         const radius = 10 + Math.random() * 20     // Random radius
+         const radius = 200 + Math.random() * 600    // Random radius
          const x = Math.cos(angle) * radius        // Get the x position using cosinus
          const z = Math.sin(angle) * radius        // Get the z position using sinus
  
@@ -456,7 +466,7 @@ directionalLight.shadow.camera.far = 50
 // directionalLight.shadow.radius = 10
 
 const directionalLightCameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera)
-directionalLightCameraHelper.visible = false
+directionalLightCameraHelper.visible = true
 scene.add(directionalLightCameraHelper)
 
 // // target debug
@@ -520,7 +530,7 @@ effectComposer.addPass(renderPass)
 
 const params = {
     shape: 1,
-    radius: 1,
+    radius: 4,
     rotateR: Math.PI / 4,
     rotateB: Math.PI / 4,
     rotateG: Math.PI / 4,
