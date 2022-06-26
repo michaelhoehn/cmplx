@@ -7,6 +7,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { HalftonePass } from 'three/examples/jsm/postprocessing/HalftonePass.js'
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
+import { BoxGeometry } from 'three'
 
 /**
  * Sizes
@@ -71,14 +72,13 @@ const scene = new THREE.Scene()
 scene.background = new THREE.Color(bgColorArray) // add bg colors
 scene.add(helper)
 
-console.log(bgColorArray)
-
 /**
  * Materials
  */
 
 // Textures 
 const textureLoader = new THREE.TextureLoader()
+const cubeTextureLoader = new THREE.CubeTextureLoader()
 const slabColorTexture = textureLoader.load('/textures/color.jpg')
 const slabAOTexture = textureLoader.load('/textures/ao.jpg')
 const slabNormalTexture = textureLoader.load('/textures/normal.jpg')
@@ -90,7 +90,17 @@ const columnRoughnessTexture = textureLoader.load('/textures/roughness.jpg')
 const gradientTexture = textureLoader.load('/textures/gradients/5.jpg')
 gradientTexture.minFilter = THREE.NearestFilter
 gradientTexture.magFilter = THREE.NearestFilter
-const matCapTexture = textureLoader.load('/textures/matcaps/4.png')
+const matCapTexture = textureLoader.load('/textures/matcaps/8.png')
+
+// Environment Maps
+const environmentMapTexture = cubeTextureLoader.load([
+    '/textures/environmentMaps/1/px.jpg',
+    '/textures/environmentMaps/1/nx.jpg',
+    '/textures/environmentMaps/1/py.jpg',
+    '/textures/environmentMaps/1/ny.jpg',
+    '/textures/environmentMaps/1/pz.jpg',
+    '/textures/environmentMaps/1/nz.jpg'
+])
 
 // Slab Material
 const slabMaterial = new THREE.MeshStandardMaterial({
@@ -152,7 +162,7 @@ const groundPlaneMesh = new THREE.Mesh(groundPlaneGeo, groundPlaneMat)
 groundPlaneMesh.rotation.x = - Math.PI * 0.5
 groundPlaneMesh.position.y = - 0.5
 groundPlaneMesh.receiveShadow = true
-scene.add(groundPlaneMesh)
+//scene.add(groundPlaneMesh)
 
 // Building Generator
 var floorCount = Math.floor(5 + fxrand() * 10)
@@ -161,10 +171,6 @@ var slabThickness = 0.03
 var buildingHeight = (floorCount * floorToFloorHeight) + (floorCount * slabThickness)
 var buildingWidth = Math.floor(2 + fxrand() * 5)
 var buildingDepth = Math.floor(2 + fxrand() * 5)
-//console.log(buildingHeight)
-console.log("Floor Count = " + floorCount)
-console.log("Floor To Floor Height = " + floorToFloorHeight)
-console.log("Slab Thickness = " + slabThickness)
 
 const parameters = {}
 parameters.floorCount = floorCount
@@ -264,8 +270,6 @@ generateBuilding()
 
 var totalHeightIndex = maxHeightArray.length
 var totalHeight = maxHeightArray[totalHeightIndex - 1]
-console.log(maxHeightArray)
-console.log(totalHeight)
 
 /**
  * Camera
@@ -304,53 +308,61 @@ const camTargetVector = new THREE.Vector3(camTargetX,camTargetY,camTargetZ)
  * Background Setting
  */
 
- let bgBuildingsCount = 500
+ let bgBuildingsCount = 500 + fxrand() * 10000
 
- const bgMassings = new THREE.Group()
- const backgroundBuildings = new THREE.BoxGeometry(0.2, 0.2, 0.2)
-//  const backgroundBuildingsMaterial = new THREE.MeshToonMaterial()
-//  backgroundBuildingsMaterial.gradientMap = gradientTexture
-const backgroundBuildingsMaterial = new THREE.MeshMatcapMaterial()
-backgroundBuildingsMaterial.matcap = matCapTexture
- scene.add(bgMassings)
+const bgMassings = new THREE.Group()
+const massingMeshes = []
+const massingPosY = []
+const backgroundBuildings = new THREE.BoxGeometry(0.2, 0.2, 0.2)
+const backgroundBuildingsMaterial = new THREE.MeshStandardMaterial()
+backgroundBuildingsMaterial.metalness = 1
+backgroundBuildingsMaterial.roughness = 0
+backgroundBuildingsMaterial.envMap = environmentMapTexture
+scene.add(bgMassings)
  
- const generateBackgroundBuildings = () => {
-     for (let i = 0; i < bgBuildingsCount; i++) {
-         // random dims for each variable 
-         let bgBuildingsWidth = 5 + fxrand() * 150
-         let bgBuildingsHeight = 50 + fxrand() * 500
-         let bgBuildingsDepth = 5 + fxrand() * 150
- 
-         const angle = Math.random() * Math.PI * 2 // Random angle
-         const radius = 200 + Math.random() * 600    // Random radius
-         const x = Math.cos(angle) * radius        // Get the x position using cosinus
-         const z = Math.sin(angle) * radius        // Get the z position using sinus
- 
-         // Create the mesh
-         const massing = new THREE.Mesh(backgroundBuildings, backgroundBuildingsMaterial)
- 
-         // Scale
-         massing.scale.x = bgBuildingsDepth
-         massing.scale.y = bgBuildingsHeight
-         massing.scale.z = bgBuildingsWidth
- 
-         // Position
-         massing.position.set(x, 0, z)                              
- 
-         // Rotation
-         massing.rotation.y = (Math.random() - 0.5) * 1
- 
-         // Add to the graves container
-         bgMassings.add(massing)
-     }
- }
- generateBackgroundBuildings()
- bgMassings.renderOrder = 2
+const generateBackgroundBuildings = () => {
+    for (let i = 0; i < bgBuildingsCount; i++) {
+        // random dims for each variable 
+        let bgBuildingsWidth = 5 + fxrand() * 100
+        let bgBuildingsHeight = 200 + fxrand() * 2000
+        let bgBuildingsDepth = 5 + fxrand() * 100
+
+        const angle = Math.random() * Math.PI * 2 // Random angle
+        const radius = 200 + Math.random() * 600    // Random radius (min / max)
+        const x = Math.cos(angle) * radius        // Get the x position using cosinus
+        const z = Math.sin(angle) * radius        // Get the z position using sinus
+
+        // Create the mesh
+        const massing = new THREE.Mesh(backgroundBuildings, backgroundBuildingsMaterial)
+
+        // Scale
+        massing.scale.x = bgBuildingsDepth
+        massing.scale.y = bgBuildingsHeight
+        massing.scale.z = bgBuildingsWidth
+
+        // Position
+        massing.position.set(x, buildingHeight/2, z)                              
+
+        // Rotation
+        massing.rotation.y = fxrand() * (Math.PI * 2)
+        massing.rotation.z = fxrand() * (Math.PI * 0.02)
+
+        // Add to the graves container
+        bgMassings.add(massing)
+
+        // add to array
+        massingMeshes.push(massing)
+    }
+}
+generateBackgroundBuildings()
+bgMassings.renderOrder = 2
 
 /**
  * Entropy
  */
 
+// TODO have tbe green start high ans move down.
+// or have it move like rustling in the wind
 var entropyStartPosY = slabsArray[targetIndex + 2].position.y
 
 const entropyParams = {}
@@ -365,25 +377,24 @@ entropyParams.randomness = fxrand() * 0.2
 entropyParams.randomnessPower = Math.floor(1 + fxrand() * 10)
 entropyParams.insideColor = 'darkgreen'
 entropyParams.outsideColor = 'lightgreen'
+const entropyGeo = new THREE.BufferGeometry()
+const positions = new Float32Array(entropyParams.count * 3)
+const colors = new Float32Array(entropyParams.count * 3)
+const colorInside = new THREE.Color(entropyParams.insideColor)
+const colorOutside = new THREE.Color(entropyParams.outsideColor)
+const pointsPositions = []
+const entropyMat = new THREE.PointsMaterial({
+    size: entropyParams.size,
+    sizeAttenuation: true,
+    depthWrite: true, 
+    opacity: 1,
+    blending: THREE.MultiplyBlending,
+    vertexColors: true,
+    renderOrder: 0
+})
+const entropyPoints = new THREE.Points(entropyGeo, entropyMat)
 
 const generateEntropy = () => {
-
-    const entropyMat = new THREE.PointsMaterial({
-        size: entropyParams.size,
-        sizeAttenuation: true,
-        depthWrite: true, 
-        opacity: 1,
-        blending: THREE.MultiplyBlending,
-        vertexColors: true,
-        renderOrder: 0
-    })
-
-    const entropyGeo = new THREE.BufferGeometry()
-    const positions = new Float32Array(entropyParams.count * 3)
-    const colors = new Float32Array(entropyParams.count * 3)
-    const colorInside = new THREE.Color(entropyParams.insideColor)
-    const colorOutside = new THREE.Color(entropyParams.outsideColor)
-    const pointsPositions = []
 
     for(let i = 0; i < entropyParams.count; i++)
     {
@@ -424,18 +435,7 @@ const generateEntropy = () => {
     }
     entropyGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
     entropyGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-
-    const entropyPoints = new THREE.Points(entropyGeo, entropyMat)
     scene.add(entropyPoints)
-
-    const lineMaterial = new THREE.LineBasicMaterial({
-        color: 'white',
-        linewidth: 0.05,
-        // blendingMode: 'darken' 
-    })
-    const lineGeometry = new THREE.BufferGeometry().setFromPoints(pointsPositions)
-    const entropyLines = new THREE.Line(lineGeometry,lineMaterial)
-    //scene.add(entropyLines)
 }
 generateEntropy()
 
@@ -469,9 +469,6 @@ const directionalLightCameraHelper = new THREE.CameraHelper(directionalLight.sha
 directionalLightCameraHelper.visible = false
 scene.add(directionalLightCameraHelper)
 
-// // target debug
-// console.log(camTargetX)
-
 // GUI Controls
 const folder0 = gui.addFolder('Building Controls')
 const folder1 = gui.addFolder('Lighting Controls')
@@ -487,11 +484,8 @@ folder2.add(camTargetVector, 'y').min(-50).max(50).step(0.001).name('targetY')
 folder2.add(camTargetVector, 'z').min(-50).max(50).step(0.001).name('targetZ')
 
 // building controls
-// folder0.add(parameters, 'floorCount').min(0).max(100).step(1).onFinishChange(generateBuilding)
-folder0.add(slabMaterial, 'metalness').min(0).max(1).step(0.001)
-folder0.add(slabMaterial, 'roughness').min(0).max(1).step(0.001)
-//folder0.add(slabMaterial, 'normalScale').min(0).max(1).step(0.0001)
-//folder0.add(slabMaterial, 'displacementScale').min(0).max(1).step(0.0001)
+folder0.add(backgroundBuildingsMaterial, 'metalness').min(0).max(1).step(0.001)
+folder0.add(backgroundBuildingsMaterial, 'roughness').min(0).max(1).step(0.001)
 
 // lighting controls
 folder1.add(directionalLight.position, 'x').min(- 50).max(50).step(0.001).name('dLight X')
@@ -504,7 +498,7 @@ folder1.add(directionalLight, 'intensity').min(0).max(1).step(0.001).name('dLigh
 
 //Controls -- debug
 const controls = new OrbitControls(camera, canvas)
-controls.enabled = true
+controls.enabled = false
 controls.enableDamping = true
 //controls.autoRotate = true
 
@@ -528,13 +522,15 @@ effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 const renderPass = new RenderPass(scene, camera)
 effectComposer.addPass(renderPass)
 
+entropyPoints.geometry.attributes.position.needsUpdate = true
+
 /**
  * Fog maybe? 
  */
 
- const fog = new THREE.Fog('#262837', 2, 500)
- scene.fog = fog
- renderer.setClearColor('#262837')
+const fog = new THREE.Fog('#262837', 2, 500)
+scene.fog = fog
+renderer.setClearColor('#262837')
 
 const params = {
     shape: 1,
@@ -610,7 +606,6 @@ folder3.add( controller, 'disable' ).onChange( onGUIChange );
      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
  })
 
-
 /**
  * Animate
  */
@@ -620,14 +615,12 @@ const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
 
-    // animate the sphere
-    // sphere.position.x = Math.cos(elapsedTime)
-    // sphere.position.z = 1 + Math.sin(elapsedTime)
-    // sphere.position.y = Math.abs(Math.sin(elapsedTime * 3))
+    //entropyPoints.geometry.attributes.position.y = Math.cos(elapsedTime) * 1.2 // <----- this doesn't work, need to create the shader material!!!
 
-    //camera.position.x = Math.cos(elapsedTime) * 10
-    //camera.position.z = Math.sin(elapsedTime) * 10
-    //camera.position.y = Math.sin(elapsedTime) * 1.5
+    // animate the background buildings
+    for(var i = 0; i < massingMeshes.length; i++){
+        massingMeshes[i].rotation.y = Math.sin(elapsedTime * 0.00025 * i * 0.01)
+    }
 
     // Update camera
     camera.lookAt(camTargetVector)
