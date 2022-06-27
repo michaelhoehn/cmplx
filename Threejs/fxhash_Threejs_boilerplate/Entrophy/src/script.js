@@ -52,7 +52,7 @@ const canvas = document.querySelector('canvas.webgl')
 // Random background color
 var bgColor = fxrand()
 // var bgColorArray = ['white', 'white', 'white', 'white', 'white']
-var bgColorArray = ['red', 'gray', 'white', 'pink', 'lightblue']
+var bgColorArray = ['lightred', 'gray', 'white', 'pink', 'lightblue']
 
 
 if(bgColor >= 0.8){
@@ -306,7 +306,8 @@ for(let i = 0; i < floorCount; i++){
         }
     }
     const newSlabs = slabPieces.clone()
-    newSlabs.position.set(0,slabPieceParams.floorOffset,0)
+    let y = slabPieceParams.floorOffset
+    newSlabs.position.set(0,y,0)
     slabPieceParams.floorOffset+=slabPieceParams.floorToFloorHeight;
     wholeSlabs.add(newSlabs)
 }

@@ -24,3 +24,9 @@ npm run build
 - Rain system boolean
 - Background textures on a plane
 - Post processing on resize
+- Entropy shader movement
+- keypressed to stop animation functionality 
+- randomize the effect render (point or line)
+- pick real colors
+- change main material to be something better?
+- effect scale change on resize
