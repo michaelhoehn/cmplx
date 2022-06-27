@@ -51,9 +51,8 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Random background color
 var bgColor = fxrand()
-//var bgColorArray = ['lightblue', 'lightblue', 'lightblue', 'lightblue', 'lightblue']
-var bgColorArray = ['white', 'white', 'white', 'white', 'white']
-//var bgColorArray = ['red', 'gray', 'white', 'pink', 'lightblue']
+// var bgColorArray = ['white', 'white', 'white', 'white', 'white']
+var bgColorArray = ['red', 'gray', 'white', 'pink', 'lightblue']
 
 
 if(bgColor >= 0.8){
@@ -200,7 +199,7 @@ scene.add(iGroup)
 // Slab Init
 const slabs = new THREE.Group()
 const slabGeometry = new THREE.BoxGeometry(parameters.slabWidthX, parameters.slabThickness, parameters.slabWidthY, 4,1,4)
-scene.add(slabs)
+//scene.add(slabs)
 
 // Column Init
 const columnGroup = new THREE.Group()
@@ -268,6 +267,51 @@ const generateBuilding = () => {
 }
 generateBuilding()
 
+/**
+ * New Slabs WIP
+ */
+// global variables 
+let numPiecesX = Math.floor(5+ fxrand() * 50)
+let numPiecesY = Math.floor(5+ fxrand() * 50)
+let newFloorOffset = 0
+
+// New Slab Pieces Params
+const slabPieceParams = {}
+slabPieceParams.widthX = parameters.slabWidthX / numPiecesX
+slabPieceParams.widthY = parameters.slabWidthY / numPiecesY
+slabPieceParams.floorOffset = 0
+slabPieceParams.floorToFloorHeight = parameters.floorToFloorHeight
+
+// New Slab Pieces Init
+const slabPieces = new THREE.Group()
+const wholeSlabs = new THREE.Group()
+const slabPieceGeometry = new THREE.BoxGeometry(slabPieceParams.widthX, parameters.slabThickness, slabPieceParams.widthY)
+//scene.add(slabPieces)
+scene.add(wholeSlabs)
+
+for(let i = 0; i < floorCount; i++){
+    for(let x = 0; x <= numPiecesX; x++){
+        for(let y = 0; y <= numPiecesY; y++){
+            // create mesh
+            const pieceMesh = new THREE.Mesh(slabPieceGeometry, columnMaterial)
+            pieceMesh.geometry.setAttribute('uv2', new THREE.BufferAttribute(pieceMesh.geometry.attributes.uv.array,2))
+    
+            // init start positions
+            const posX = (x/numPiecesX) * buildingWidth - buildingWidth / 2
+            const posY = (y/numPiecesY) * buildingDepth - buildingDepth / 2
+            pieceMesh.position.set(posX, fxrand() * 0.05, posY)
+            slabPieces.add(pieceMesh)
+            pieceMesh.castShadow = true
+            pieceMesh.receiveShadow = true
+        }
+    }
+    const newSlabs = slabPieces.clone()
+    newSlabs.position.set(0,slabPieceParams.floorOffset,0)
+    slabPieceParams.floorOffset+=slabPieceParams.floorToFloorHeight;
+    wholeSlabs.add(newSlabs)
+}
+
+
 var totalHeightIndex = maxHeightArray.length
 var totalHeight = maxHeightArray[totalHeightIndex - 1]
 
@@ -308,7 +352,7 @@ const camTargetVector = new THREE.Vector3(camTargetX,camTargetY,camTargetZ)
  * Background Setting
  */
 
- let bgBuildingsCount = 500 + fxrand() * 10000
+ let bgBuildingsCount = 50 + fxrand() * 500
 
 const bgMassings = new THREE.Group()
 const massingMeshes = []
@@ -323,9 +367,9 @@ scene.add(bgMassings)
 const generateBackgroundBuildings = () => {
     for (let i = 0; i < bgBuildingsCount; i++) {
         // random dims for each variable 
-        let bgBuildingsWidth = 5 + fxrand() * 100
-        let bgBuildingsHeight = 200 + fxrand() * 2000
-        let bgBuildingsDepth = 5 + fxrand() * 100
+        let bgBuildingsWidth = 5 + fxrand() * 25
+        let bgBuildingsHeight = 200 + fxrand() * 1000
+        let bgBuildingsDepth = 5 + fxrand() * 25
 
         const angle = Math.random() * Math.PI * 2 // Random angle
         const radius = 200 + Math.random() * 600    // Random radius (min / max)
@@ -345,7 +389,7 @@ const generateBackgroundBuildings = () => {
 
         // Rotation
         massing.rotation.y = fxrand() * (Math.PI * 2)
-        massing.rotation.z = fxrand() * (Math.PI * 0.02)
+        massing.rotation.z = fxrand() * (Math.PI * 0.05)
 
         // Add to the graves container
         bgMassings.add(massing)
@@ -360,10 +404,7 @@ bgMassings.renderOrder = 2
 /**
  * Entropy
  */
-
-// TODO have tbe green start high ans move down.
-// or have it move like rustling in the wind
-var entropyStartPosY = slabsArray[targetIndex + 2].position.y
+var entropyStartPosY = slabsArray[floorCount - 1].position.y // this was changed from target 
 
 const entropyParams = {}
 entropyParams.count = 100000 //Math.floor(100 + fxrand() * 5000) //Math.floor(500000 + fxrand() * 1000000)
@@ -402,8 +443,6 @@ const generateEntropy = () => {
         const radius = Math.random() * entropyParams.radius
         const depth = Math.random() * entropyParams.depth
         const width = Math.random() * entropyParams.width
-        const spinAngle = radius * entropyParams.spin
-        const branchAngle = (i % entropyParams.branches) / entropyParams.branches * Math.PI * 2
         var numberOfFloorsCovered = Math.floor(1 + fxrand() * floorCount)
 
         const randomX = Math.pow(Math.random(), entropyParams.randomnessPower) * (Math.random() < 0.5 ? 0 : 0) * entropyParams.randomness * width // this controls how far spread the intial drop of points can reach <---- adjust the random conditional to constrain it within the slab boundary or let it grow beyond
@@ -619,7 +658,7 @@ const tick = () =>
 
     // animate the background buildings
     for(var i = 0; i < massingMeshes.length; i++){
-        massingMeshes[i].rotation.y = Math.sin(elapsedTime * 0.00025 * i * 0.01)
+        massingMeshes[i].rotation.y = Math.sin(elapsedTime * 0.003 * i * 0.01)
     }
 
     // Update camera
