@@ -7,7 +7,6 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { HalftonePass } from 'three/examples/jsm/postprocessing/HalftonePass.js'
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
-import { BoxGeometry } from 'three'
 
 /**
  * Sizes
@@ -49,11 +48,12 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 
-// Random background color
+// Random color
 var bgColor = fxrand()
+var elementColor = fxrand()
 // var bgColorArray = ['white', 'white', 'white', 'white', 'white']
-var bgColorArray = ['lightred', 'gray', 'white', 'pink', 'lightblue']
-
+var bgColorArray = ['lightred', 'black', 'white', 'pink', 'lightblue']
+var elementColorArray = ['red', 'gray', 'black', 'pink', 'lightblue']
 
 if(bgColor >= 0.8){
     bgColorArray = bgColorArray[0]
@@ -65,6 +65,18 @@ if(bgColor >= 0.8){
     bgColorArray = bgColorArray[3]
 } else {
     bgColorArray = bgColorArray[4]
+}
+
+if(elementColor >= 0.8){
+    elementColorArray = elementColorArray[0]
+} else if (bgColor < 0.8 && bgColor >= 0.6) {
+    elementColorArray = elementColorArray[1]
+} else if (bgColor < 0.6 && bgColor >= 0.4) {
+    elementColorArray = elementColorArray[2]
+} else if (bgColor < 0.4 && bgColor >= 0.2) {
+    elementColorArray = elementColorArray[3]
+} else {
+    elementColorArray = elementColorArray[4]
 }
 
 const scene = new THREE.Scene()
@@ -100,6 +112,11 @@ const environmentMapTexture = cubeTextureLoader.load([
     '/textures/environmentMaps/1/pz.jpg',
     '/textures/environmentMaps/1/nz.jpg'
 ])
+
+// Simple Material
+const simpleMaterial = new THREE.MeshStandardMaterial({
+    color: elementColorArray
+})
 
 // Slab Material
 const slabMaterial = new THREE.MeshStandardMaterial({
@@ -212,7 +229,8 @@ const generateBuilding = () => {
     for(let i = 0; i < parameters.floorCount; i++){
         const slab = new THREE.Mesh(
             slabGeometry,
-            slabMaterial
+            simpleMaterial
+            //slabMaterial
         )
         slab.geometry.setAttribute('uv2', new THREE.BufferAttribute(slab.geometry.attributes.uv.array,2))
         slab.position.set(0,parameters.floorOffset,0)
@@ -228,7 +246,11 @@ const generateBuilding = () => {
         // Square Columns   <----- Todo: Rectangle Columns 
         for(let x = 0; x <= parameters.countX; x++){
             for(let y = 0; y <= parameters.countY; y++){
-                const columns = new THREE.Mesh(columnGeo, columnMaterial)
+                const columns = new THREE.Mesh(
+                    columnGeo, 
+                    simpleMaterial
+                    //columnMaterial
+                )
                 columns.geometry.setAttribute('uv2', new THREE.BufferAttribute(columns.geometry.attributes.uv.array,2))
                 const posX = (x/parameters.countX) * parameters.widthX - parameters.widthX / 2
                 const posY = (y/parameters.countY) * parameters.widthY - parameters.widthY / 2
@@ -241,10 +263,22 @@ const generateBuilding = () => {
         // Place IGroup
         for(let x = 0; x <= parameters.countX; x++){
             for(let y = 0; y <= parameters.countY; y++){
-                const iMesh0 = new THREE.Mesh(iGeo0, columnMaterial)
-                const iMesh1 = new THREE.Mesh(iGeo1, columnMaterial)
+                const iMesh0 = new THREE.Mesh(
+                    iGeo0,
+                    simpleMaterial 
+                    //columnMaterial
+                )
+                const iMesh1 = new THREE.Mesh(
+                    iGeo1, 
+                    simpleMaterial
+                    //columnMaterial
+                )
                 var mesh1XOffset = 0.05/2
-                const iMesh2 = new THREE.Mesh(iGeo2, columnMaterial)
+                const iMesh2 = new THREE.Mesh(
+                    iGeo2, 
+                    simpleMaterial
+                    //columnMaterial
+                )
                 var mesh2XOffset = 0.05
                 iMesh0.geometry.setAttribute('uv2', new THREE.BufferAttribute(iMesh0.geometry.attributes.uv.array,2))
                 iMesh1.geometry.setAttribute('uv2', new THREE.BufferAttribute(iMesh1.geometry.attributes.uv.array,2))
@@ -293,13 +327,17 @@ for(let i = 0; i < floorCount; i++){
     for(let x = 0; x <= numPiecesX; x++){
         for(let y = 0; y <= numPiecesY; y++){
             // create mesh
-            const pieceMesh = new THREE.Mesh(slabPieceGeometry, columnMaterial)
+            const pieceMesh = new THREE.Mesh(
+                slabPieceGeometry,
+                simpleMaterial
+                //columnMaterial
+            )
             pieceMesh.geometry.setAttribute('uv2', new THREE.BufferAttribute(pieceMesh.geometry.attributes.uv.array,2))
     
             // init start positions
             const posX = (x/numPiecesX) * buildingWidth - buildingWidth / 2
             const posY = (y/numPiecesY) * buildingDepth - buildingDepth / 2
-            pieceMesh.position.set(posX, fxrand() * 0.05, posY)
+            pieceMesh.position.set(posX, fxrand() * 0.05, posY) // <----- could set this as a random power 
             slabPieces.add(pieceMesh)
             pieceMesh.castShadow = true
             pieceMesh.receiveShadow = true
@@ -359,10 +397,11 @@ const bgMassings = new THREE.Group()
 const massingMeshes = []
 const massingPosY = []
 const backgroundBuildings = new THREE.BoxGeometry(0.2, 0.2, 0.2)
-const backgroundBuildingsMaterial = new THREE.MeshStandardMaterial()
-backgroundBuildingsMaterial.metalness = 1
-backgroundBuildingsMaterial.roughness = 0
-backgroundBuildingsMaterial.envMap = environmentMapTexture
+const backgroundBuildingsMaterial = new THREE.MeshStandardMaterial({color: 'white'})
+
+//backgroundBuildingsMaterial.metalness = 1
+//backgroundBuildingsMaterial.roughness = 0
+//backgroundBuildingsMaterial.envMap = environmentMapTexture
 scene.add(bgMassings)
  
 const generateBackgroundBuildings = () => {
@@ -390,7 +429,7 @@ const generateBackgroundBuildings = () => {
 
         // Rotation
         massing.rotation.y = fxrand() * (Math.PI * 2)
-        massing.rotation.z = fxrand() * (Math.PI * 0.05)
+        //massing.rotation.z = fxrand() * (Math.PI * 0.05)
 
         // Add to the graves container
         bgMassings.add(massing)
@@ -538,7 +577,7 @@ folder1.add(directionalLight, 'intensity').min(0).max(1).step(0.001).name('dLigh
 
 //Controls -- debug
 const controls = new OrbitControls(camera, canvas)
-controls.enabled = false
+controls.enabled = true
 controls.enableDamping = true
 //controls.autoRotate = true
 
@@ -568,9 +607,9 @@ entropyPoints.geometry.attributes.position.needsUpdate = true
  * Fog maybe? 
  */
 
-const fog = new THREE.Fog('#262837', 2, 500)
-scene.fog = fog
-renderer.setClearColor('#262837')
+// const fog = new THREE.Fog('#262837', 2, 500)
+// scene.fog = fog
+// renderer.setClearColor('#262837')
 
 const params = {
     shape: 1,
@@ -662,11 +701,17 @@ const tick = () =>
         massingMeshes[i].rotation.y = Math.sin(elapsedTime * 0.003 * i * 0.01)
     }
 
+    /**
+     * Animation to do
+     * I could animate the camera to move very slowly around the target > key pressed to pause animation 
+     * Animate the count of the entropy points by some random factor to simulate growth
+     */
+
     // Update camera
     camera.lookAt(camTargetVector)
 
     // Update controls
-    //controls.update()
+    controls.update()
 
     // Render
     //renderer.render(scene, camera)
