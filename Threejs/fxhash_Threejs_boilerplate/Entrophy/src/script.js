@@ -118,6 +118,9 @@ const simpleMaterial = new THREE.MeshStandardMaterial({
     color: elementColorArray
 })
 
+// Wire Material
+const wireframeMaterial = new THREE.MeshBasicMaterial( { color: 0x000000, wireframe: true, transparent: true } );
+
 // Slab Material
 const slabMaterial = new THREE.MeshStandardMaterial({
     map: slabColorTexture,
@@ -220,8 +223,10 @@ const slabGeometry = new THREE.BoxGeometry(parameters.slabWidthX, parameters.sla
 
 // Column Init
 const columnGroup = new THREE.Group()
-const columnGeo = new THREE.BoxGeometry(0.05, parameters.floorToFloorHeight * parameters.floorCount, 0.05, 4,1,4) // <----- Todo column width and depth can vary
+const columnWires = new THREE.Group()
+const columnGeo = new THREE.BoxGeometry(0.05, parameters.floorToFloorHeight * parameters.floorCount, 0.05, 1,1,1) // <----- Todo column width and depth can vary
 scene.add(columnGroup)
+scene.add(columnWires)
 
 var maxHeightArray = []
 
@@ -251,11 +256,14 @@ const generateBuilding = () => {
                     simpleMaterial
                     //columnMaterial
                 )
+                const columnWireframe = new THREE.Mesh( columnGeo, wireframeMaterial );
                 columns.geometry.setAttribute('uv2', new THREE.BufferAttribute(columns.geometry.attributes.uv.array,2))
                 const posX = (x/parameters.countX) * parameters.widthX - parameters.widthX / 2
                 const posY = (y/parameters.countY) * parameters.widthY - parameters.widthY / 2
                 columns.position.set(posX, ((parameters.floorToFloorHeight * parameters.floorCount)/2) - parameters.floorToFloorHeight, posY)
+                columnWireframe.position.set(posX, ((parameters.floorToFloorHeight * parameters.floorCount)/2) - parameters.floorToFloorHeight, posY)
                 columnGroup.add(columns)
+                columnWires.add(columnWireframe)
                 columns.castShadow = true
             }
         }
